@@ -10,6 +10,12 @@ namespace WBSBE.Common.Entity.WBS
 {
     public class mAduan
     {
+        public mAduan()
+        {
+            listAttachments = new List<mAttachment>();
+            answerForQuestion = new List<mJawabPertanyaan>();
+        }
+
         [Key]
         [StringLength(50)]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -42,5 +48,9 @@ namespace WBSBE.Common.Entity.WBS
 
         [StringLength(50)]
         public string? txtUpdatedBy { get; set; }
+
+        public List<mAttachment> listAttachments { get; set; }
+
+        public List<mJawabPertanyaan> answerForQuestion { get; set; }
     }
 }
