@@ -14,8 +14,6 @@ namespace WBSBE.Common.Entity.WBS
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int intJwbPertanyaanID { get; set; }
 
-        public string txtNomorAduan { get; set; }
-
         [StringLength(255)]
         public string txtPertanyaan1 { get; set; }
 
@@ -35,5 +33,7 @@ namespace WBSBE.Common.Entity.WBS
         [StringLength(50)]
         public string? txtUpdatedBy { get; set; }
         public DateTime? dtmUpdated { get; set; }
+
+        public virtual mAduan txtNomorAduan { get; set; }
     }
 }

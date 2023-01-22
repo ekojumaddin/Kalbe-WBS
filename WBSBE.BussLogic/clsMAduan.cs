@@ -31,9 +31,9 @@ namespace WBSBE.BussLogic
         {
             List<AduanModel> listAduan = new List<AduanModel>();
             var query = (from a in context.mAduan
-                        join j in context.mJawabPertanyaan on a.txtNomorID equals j.txtNomorAduan
-                        join l in context.mAttachment on a.txtNomorID equals l.txtNomorAduan
-                        where a.bitActive == true
+                         join j in context.mJawabPertanyaan on a.txtNomorID equals j.txtNomorAduan.txtNomorID
+                         join l in context.mAttachment on a.txtNomorID equals l.mAduan.txtNomorID
+                         where a.bitActive == true
                         orderby a.txtNomorID
                         select new
                         {
@@ -106,9 +106,9 @@ namespace WBSBE.BussLogic
             using (var context = new WBSDBContext())
             {
                 var query = (from a in context.mAduan
-                                 join j in context.mJawabPertanyaan on a.txtNomorID equals j.txtNomorAduan
-                                 join l in context.mAttachment on a.txtNomorID equals l.txtNomorAduan
-                                 where a.txtNomorID == paramTxtId
+                             join j in context.mJawabPertanyaan on a.txtNomorID equals j.txtNomorAduan.txtNomorID
+                             join l in context.mAttachment on a.txtNomorID equals l.mAduan.txtNomorID
+                             where a.txtNomorID == paramTxtId
                                  select new
                                  {
                                      Nomor = a.txtNomorID,
@@ -170,13 +170,9 @@ namespace WBSBE.BussLogic
                     aduan.txtStatus = "Open";
                     aduan.dtmInserted = DateTime.UtcNow;
                     aduan.txtInsertedBy = "Manual";
-                    aduan.bitActive = true;
-
-                    context.mAduan.Add(aduan);
-                    context.SaveChanges();
+                    aduan.bitActive = true;                    
 
                     mJawabPertanyaan jawaban = new mJawabPertanyaan();
-                    jawaban.txtNomorAduan = aduan.txtNomorID;
                     jawaban.txtPertanyaan1 = paramData.txtPertanyaan1;
                     jawaban.txtPertanyaan2 = paramData.txtPertanyaan2;
                     jawaban.txtPertanyaan3 = paramData.txtPertanyaan3;
@@ -184,8 +180,7 @@ namespace WBSBE.BussLogic
                     jawaban.dtmInserted = DateTime.UtcNow;
                     jawaban.txtInsertedBy = "Manual";
 
-                    context.mJawabPertanyaan.Add(jawaban);
-                    context.SaveChanges();
+                    aduan.answerForQuestion.Add(jawaban);
 
                     foreach (IFormFile file in paramData.fileData)
                     {
@@ -218,7 +213,6 @@ namespace WBSBE.BussLogic
                             return ResponseHandler.SendResponse("Ukuran file terlalu besar");
                         }
 
-                        attachment.txtNomorAduan = aduan.txtNomorID;
                         attachment.bitActive = true;
                         attachment.dtmInserted = DateTime.UtcNow;
                         attachment.txtInsertedBy = "Manual"; //will be change to user login
@@ -230,9 +224,11 @@ namespace WBSBE.BussLogic
                         pathAttachment = pathAttachment.Replace("~/", "").Replace("/", Path.DirectorySeparatorChar.ToString());
                         attachment.txtFilePath = ClsGlobalClass.GetRootPath + pathAttachment + fileName;
 
-                        context.mAttachment.Add(attachment);
-                        context.SaveChanges();
+                        aduan.listAttachments.Add(attachment);
                     }
+
+                    context.mAduan.Add(aduan);
+                    context.SaveChanges();
 
                     #region sendingEmail  
                     //string subjectMailComplainer = context.mConfig.Where(c => c.txtType == "ComplaintReceived" && c.txtName == "MailSubject" && c.bitActive == true)
