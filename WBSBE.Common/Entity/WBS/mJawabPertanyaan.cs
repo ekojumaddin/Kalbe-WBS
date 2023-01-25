@@ -34,6 +34,8 @@ namespace WBSBE.Common.Entity.WBS
         public string? txtUpdatedBy { get; set; }
         public DateTime? dtmUpdated { get; set; }
 
+        public bool bitActive { get; set; }
+
         public virtual mAduan txtNomorAduan { get; set; }
     }
 }
