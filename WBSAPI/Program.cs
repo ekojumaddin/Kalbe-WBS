@@ -2,6 +2,7 @@ using KN2021_GlobalClient_NetCore;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Versioning;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.FileProviders;
@@ -13,6 +14,7 @@ using WBSBE.BussLogic.Custom;
 using WBSBE.Common.ConfigurationModel;
 using WBSBE.Common.Library;
 using WBSBE.Common.Library.Interface;
+using WBSBE.DAL.Context;
 using WBSBE.Library;
 using WBSBE.Library.SwaggerAttribute;
 using static KN2021_GlobalClient_NetCore.clsGlobalWebAPI;
@@ -20,7 +22,7 @@ using static KN2021_GlobalClient_NetCore.clsGlobalWebAPI;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
+builder.Services.AddDbContext<WBSDBContext>(o => o.UseNpgsql(builder.Configuration.GetConnectionString("WBSDBConnection")));
 builder.Services.AddCors();
 builder.Services.ConfigureLoggerService();
 builder.Services.AddControllers();
