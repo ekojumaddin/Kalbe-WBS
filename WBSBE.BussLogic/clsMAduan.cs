@@ -529,5 +529,103 @@ namespace WBSBE.BussLogic
             pathAttachment = pathAttachment.Replace("~/", "").Replace("/", Path.DirectorySeparatorChar.ToString());
             attachment.txtFilePath = ClsGlobalClass.GetRootPath + pathAttachment + fileName;
         }
+
+        public List<AduanModel> sortingData(string sortOrder)
+        {
+            using (var context = new WBSDBContext())
+            {
+                List<AduanModel> listAduan = new List<AduanModel>();
+                var query = from a in context.mAduan
+                            join j in context.mJawabPertanyaan on a.txtNomorID equals j.txtNomorAduan.txtNomorID
+                            where a.bitActive == true && j.bitActive == true
+                            orderby a.txtNomorID
+                            select new
+                            {
+                                Nomor = a.txtNomorID,
+                                Status = a.txtStatus,
+                                Pertanyaan1 = j.txtPertanyaan1
+                            };
+
+                switch (sortOrder)
+                {
+                    case "nomor":
+                        query = query.OrderByDescending(s => s.Nomor);
+                        break;
+                    case "pertanyaan":
+                        query = query.OrderBy(s => s.Status);
+                        break;
+                    case "status":
+                        query = query.OrderByDescending(s => s.Pertanyaan1);
+                        break;
+                    default:
+                        query = query.OrderBy(s => s.Nomor);
+                        break;
+                }
+
+                foreach (var aduan in query)
+                {
+                    listAduan.Add(new AduanModel()
+                    {
+                        txtNomorID = aduan.Nomor,
+                        txtStatus = aduan.Status,
+                        txtPertanyaan1 = aduan.Pertanyaan1
+                    });
+                }
+
+                return listAduan;
+            }
+        }
+
+        public List<AduanModel> searchingData(string sortOrder, string searchString)
+        {
+            using (var context = new WBSDBContext())
+            {
+                List<AduanModel> listAduan = new List<AduanModel>();
+
+                var query = from a in context.mAduan
+                            join j in context.mJawabPertanyaan on a.txtNomorID equals j.txtNomorAduan.txtNomorID
+                            where a.bitActive == true && j.bitActive == true
+                            orderby a.txtNomorID
+                            select new
+                            {
+                                Nomor = a.txtNomorID,
+                                Status = a.txtStatus,
+                                Pertanyaan1 = j.txtPertanyaan1
+                            };
+
+                if (!String.IsNullOrEmpty(searchString))
+                {
+                    query = query.Where(s => s.Nomor.Contains(searchString) || s.Status.Contains(searchString) || s.Pertanyaan1.Contains(searchString));
+                }
+
+                switch (sortOrder)
+                {
+                    case "nomor":
+                        query = query.OrderByDescending(s => s.Nomor);
+                        break;
+                    case "pertanyaan":
+                        query = query.OrderBy(s => s.Status);
+                        break;
+                    case "status":
+                        query = query.OrderByDescending(s => s.Pertanyaan1);
+                        break;
+                    default:
+                        query = query.OrderBy(s => s.Nomor);
+                        break;
+                }
+
+                foreach (var aduan in query)
+                {
+                    listAduan.Add(new AduanModel()
+                    {
+                        txtNomorID = aduan.Nomor,
+                        txtStatus = aduan.Status,
+                        txtPertanyaan1 = aduan.Pertanyaan1
+                    });
+                }
+
+                return listAduan;
+            }
+        }
     }
 }

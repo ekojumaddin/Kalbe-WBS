@@ -154,5 +154,52 @@ namespace WBSBE.Controllers
             apiDat.objData = clsAduan.Delete(dtParam.txtNomorID);
             return Ok(apiDat);
         }
+
+        public IActionResult TestSorting(string sortOrder)
+        {
+            ViewData["NomoAduanParam"] = String.IsNullOrEmpty(sortOrder) ? "nomor" : "";
+            ViewData["Pertanyaan1Param"] = String.IsNullOrEmpty(sortOrder) ? "pertanyaan" : "";
+            ViewData["StatusParam"] = String.IsNullOrEmpty(sortOrder) ? "status" : "";
+
+            var aduan = clsAduan.sortingData(sortOrder);
+            return View(aduan.ToList());
+        }
+
+        public IActionResult TestSortingAndSearching(string sortOrder, string searchString)
+        {
+            ViewData["NomoAduanParam"] = String.IsNullOrEmpty(sortOrder) ? "nomor" : "";
+            ViewData["Pertanyaan1Param"] = String.IsNullOrEmpty(sortOrder) ? "pertanyaan" : "";
+            ViewData["StatusParam"] = String.IsNullOrEmpty(sortOrder) ? "status" : "";
+            ViewData["CurrentFilter"] = searchString;
+
+            var aduan = clsAduan.searchingData(sortOrder, searchString);
+
+            return View(aduan.ToList());
+        }
+
+        public IActionResult TestPagination(string sortOrder, string currentFilter, string searchString, int? pageNumber)
+        {
+            ViewData["CurrentSort"] = sortOrder;
+            ViewData["NomoAduanParam"] = String.IsNullOrEmpty(sortOrder) ? "nomor" : "";
+            ViewData["Pertanyaan1Param"] = String.IsNullOrEmpty(sortOrder) ? "pertanyaan" : "";
+            ViewData["StatusParam"] = String.IsNullOrEmpty(sortOrder) ? "status" : "";
+
+            if (searchString != null)
+            {
+                pageNumber = 1;
+            }
+            else
+            {
+                searchString = currentFilter;
+            }
+
+            ViewData["CurrentFilter"] = searchString;
+
+            var aduan = clsAduan.searchingData(sortOrder, searchString);
+
+            int pageSize = 10;
+
+            return View(PaginatedList<AduanModel>.CreateAsync(aduan.AsQueryable(), pageNumber ?? 1, pageSize));
+        }
     }
 }

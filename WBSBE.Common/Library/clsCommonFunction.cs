@@ -58,9 +58,9 @@ namespace WBSBE.Common.Library
             mail.Subject = paramModel.txtSubject;
             mail.Body = paramModel.txtBody;
 
-            //SmtpClient smtp = new SmtpClient(ClsGlobalConstant.defaultConfigurationValue.SMTP);
+            SmtpClient smtp = new SmtpClient(ClsGlobalConstant.defaultConfigurationValue.SMTP);
 
-            var smtp = new SmtpClient("127.0.0.1");
+            //var smtp = new SmtpClient("127.0.0.1");
 
             #region Attachment
 
