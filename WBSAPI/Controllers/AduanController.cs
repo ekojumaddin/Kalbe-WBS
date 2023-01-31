@@ -7,6 +7,7 @@ using WBSBE.Common.Model;
 using WBSBE.Common.Entity.WBS;
 using Swashbuckle.AspNetCore.Filters;
 using System.Net;
+using Microsoft.EntityFrameworkCore;
 
 namespace WBSBE.Controllers
 {
@@ -91,16 +92,17 @@ namespace WBSBE.Controllers
             {
                 JObject param = JObject.Parse(apiDat.objRequestData.ToString());
                 var dtParam = JsonConvert.DeserializeObject<AduanModel>(param.ToString());
-                var aduan = clsAduan.GetDataById(dtParam.txtNomorID);
+                var objData = clsAduan.GetDataById(dtParam.txtNomorID);
 
-                if (aduan.message != null)
+                if (objData.message != null)
                 {
                     ResponseType type = ResponseType.NotFound;
-                    apiDat.txtMessage = aduan.message;
+                    apiDat.txtMessage = objData.message;
                     return Ok(apiDat);
                 }
 
-                return Ok(aduan);
+                apiDat = clsGlobalAPI.CreateResult(apiDat, true, objData, string.Empty, string.Empty);
+                return Ok(apiDat);
             }
             catch (Exception ex)
             {
@@ -146,7 +148,7 @@ namespace WBSBE.Controllers
         }
 
         [HttpPost]
-        [Route("DeleteAduan")]
+        [Route("ChangeStatusAduan")]
         public IActionResult deleteData(clsGlobalAPI apiDat)
         {
             JObject param = JObject.Parse(apiDat.objRequestData.ToString());
@@ -155,6 +157,8 @@ namespace WBSBE.Controllers
             return Ok(apiDat);
         }
 
+        [HttpPost]
+        [Route("SortAduan")]
         public IActionResult TestSorting(string sortOrder)
         {
             ViewData["NomoAduanParam"] = String.IsNullOrEmpty(sortOrder) ? "nomor" : "";
@@ -165,6 +169,8 @@ namespace WBSBE.Controllers
             return View(aduan.ToList());
         }
 
+        [HttpPost]
+        [Route("SortSearchAduan")]
         public IActionResult TestSortingAndSearching(string sortOrder, string searchString)
         {
             ViewData["NomoAduanParam"] = String.IsNullOrEmpty(sortOrder) ? "nomor" : "";
@@ -177,6 +183,8 @@ namespace WBSBE.Controllers
             return View(aduan.ToList());
         }
 
+        [HttpPost]
+        [Route("PaginationAduan")]
         public IActionResult TestPagination(string sortOrder, string currentFilter, string searchString, int? pageNumber)
         {
             ViewData["CurrentSort"] = sortOrder;
