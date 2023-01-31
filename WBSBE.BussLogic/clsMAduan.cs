@@ -47,11 +47,13 @@ namespace WBSBE.BussLogic
                 {
                     var dt = context.mAduan.Where(x => x.txtNomorID == paramTxtId).FirstOrDefault();
 
-                    dt.answerForQuestion = context.mJawabPertanyaan.Where(x => x.txtNomorAduan.txtNomorID == paramTxtId).ToList();
-                    dt.listAttachments = context.mAttachment.Where(x => x.mAduan.txtNomorID == paramTxtId).ToList();
-                    dt.bitActive = false;
-                    dt.dtmUpdated = DateTime.UtcNow;
-                    dt.txtUpdatedBy = "Manual";
+                    if (dt.bitActive != false) {
+
+                        dt.answerForQuestion = context.mJawabPertanyaan.Where(x => x.txtNomorAduan.txtNomorID == paramTxtId).ToList();
+                        dt.listAttachments = context.mAttachment.Where(x => x.mAduan.txtNomorID == paramTxtId).ToList();
+                        dt.bitActive = false;
+                        dt.dtmUpdated = DateTime.UtcNow;
+                        dt.txtUpdatedBy = "Manual";
 
                     foreach (var dtPertanyaan in dt.answerForQuestion)
                     {
@@ -67,10 +69,42 @@ namespace WBSBE.BussLogic
                         dtAttachment.txtUpdatedBy = "Manual";
                     }
 
-                    context.Update(dt);
-                    context.SaveChanges();
-                    transaction.Commit();
-                    return paramTxtId;
+                        context.Update(dt);
+                        context.SaveChanges();
+                        transaction.Commit();
+                        return paramTxtId;
+
+                    }
+
+                    else
+                    {
+                        dt.answerForQuestion = context.mJawabPertanyaan.Where(x => x.txtNomorAduan.txtNomorID == paramTxtId).ToList();
+                        dt.listAttachments = context.mAttachment.Where(x => x.mAduan.txtNomorID == paramTxtId).ToList();
+                        dt.bitActive = true;
+                        dt.dtmUpdated = DateTime.UtcNow;
+                        dt.txtUpdatedBy = "Manual";
+
+                        foreach (var dtPertanyaan in dt.answerForQuestion)
+                        {
+                            dtPertanyaan.bitActive = true;
+                            dtPertanyaan.dtmUpdated = DateTime.UtcNow;
+                            dtPertanyaan.txtUpdatedBy = "Manual";
+                        }
+
+                        foreach (var dtAttachment in dt.listAttachments)
+                        {
+                            dtAttachment.bitActive = true;
+                            dtAttachment.dtmUpdated = DateTime.UtcNow;
+                            dtAttachment.txtUpdatedBy = "Manual";
+                        }
+
+                        context.Update(dt);
+                        context.SaveChanges();
+                        transaction.Commit();
+                        return paramTxtId;
+                    }
+
+                    
                 }
                 catch (Exception ex)
                 {
@@ -84,10 +118,10 @@ namespace WBSBE.BussLogic
         public List<AduanModel> GetAllData(WBSDBContext context)
         {
             List<AduanModel> listAduan = new List<AduanModel>();
+
             var query = (from a in context.mAduan
-                        join j in context.mJawabPertanyaan on a.txtNomorID equals j.txtNomorAduan.txtNomorID       
-                        join l in context.mAttachment on a.txtNomorID equals l.mAduan.txtNomorID
-                        where a.bitActive == true && j.bitActive == true && l.bitActive == true
+                        join j in context.mJawabPertanyaan on a.txtNomorID equals j.txtNomorAduan.txtNomorID
+                        where a.bitActive == true && j.bitActive == true
                         orderby a.txtNomorID
                         select new
                         {
@@ -315,6 +349,9 @@ namespace WBSBE.BussLogic
                 //{
                 //    clsCommonFunction.sendEmail(mailModelComplainer);
                 //    clsCommonFunction.sendEmail(mailModelCommitee);
+
+                //    SendEmailViaKNGlobal(mailModelComplainer);
+                //    SendEmailViaKNGlobal(mailModelCommitee);
 
                 //    aduan.bitSentMail = true;
                 //    context.SaveChanges();
@@ -627,5 +664,27 @@ namespace WBSBE.BussLogic
                 return listAduan;
             }
         }
+
+        public static bool SendEmailViaKNGlobal(cstmMailModel paramModel)
+        {
+            //trDebugEmail dat = trDebugEmail.CreateBlankClstrDebugEmail();
+            //dat.txtBody = paramModel.txtBody;
+            //dat.txtFrom = paramModel.txtFrom;
+            //dat.txtSubject = paramModel.txtSubject;
+            //dat.txtTo = paramModel.txtTo;
+
+            clsGlobalAPI apiDat = clsWSO2Helper.CallAPI(ClsGlobalClass.dLogin.txtUserName, ClsGlobalConstant.DefaultLangID,
+                                                         clsConstantClient.WSO_API.SendEmail, paramModel, ClsGlobalConstant.txtProgramCode, null);
+
+            if (apiDat.bitSuccess)
+            {
+                return true;
+            }
+            else
+            {
+                throw new Exception(apiDat.txtErrorMessage);
+            }
+        }
+
     }
 }
