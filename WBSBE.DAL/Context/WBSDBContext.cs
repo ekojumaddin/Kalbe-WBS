@@ -7,7 +7,6 @@ using System.Text;
 using System.Threading.Tasks;
 using WBSBE.Common.Entity.WBS;
 using WBSBE.Common.Library;
-using WBSBE.Common.Model.Custom.ModelAppGW;
 using WBSBE.DAL.ModelBuilders.WBS;
 
 namespace WBSBE.DAL.Context
@@ -29,6 +28,8 @@ namespace WBSBE.DAL.Context
         public virtual DbSet<mJawabPertanyaan> mJawabPertanyaan { get; set; }
         public virtual DbSet<mAttachment> mAttachment { get; set; }
         public virtual DbSet<mConfig> mConfig { get; set; }
+
+        public virtual DbSet<mLookup> mLookup { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

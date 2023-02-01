@@ -4,10 +4,18 @@ using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 using WBSBE.BussLogic;
 using WBSBE.Common.Model;
-using WBSBE.Common.Entity.WBS;
 using Swashbuckle.AspNetCore.Filters;
 using System.Net;
 using Microsoft.EntityFrameworkCore;
+using System.IO;
+using System.Net.Http.Headers;
+using System.Net.Http;
+using RouteAttribute = Microsoft.AspNetCore.Mvc.RouteAttribute;
+using HttpPostAttribute = Microsoft.AspNetCore.Mvc.HttpPostAttribute;
+using WBSBE.Common.Library;
+using System;
+using Microsoft.Extensions.Hosting;
+using System.ComponentModel.DataAnnotations;
 
 namespace WBSBE.Controllers
 {
@@ -41,6 +49,25 @@ namespace WBSBE.Controllers
                 return BadRequest(ResponseHandler.GetExceptionResponse(ex));
             }
         }
+
+        #region Download File
+        [HttpPost]
+        [Route("getAttachmentById")]
+        public IActionResult downloadLampiran(string nomor)
+        {
+            try
+            {
+                var (fileType, archiveData, archiveName) = clsAduan.DownloadFiles(nomor);
+
+                return File(archiveData, fileType, archiveName);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+
+        }
+        #endregion
 
         [HttpPost]
         [Route("CreateAduan")]
@@ -159,19 +186,21 @@ namespace WBSBE.Controllers
 
         [HttpPost]
         [Route("SortAduan")]
-        public IActionResult TestSorting(string sortOrder)
+        public IActionResult TestSorting(string? sortOrder)
         {
             ViewData["NomoAduanParam"] = String.IsNullOrEmpty(sortOrder) ? "nomor" : "";
             ViewData["Pertanyaan1Param"] = String.IsNullOrEmpty(sortOrder) ? "pertanyaan" : "";
             ViewData["StatusParam"] = String.IsNullOrEmpty(sortOrder) ? "status" : "";
 
             var aduan = clsAduan.sortingData(sortOrder);
-            return View(aduan.ToList());
+
+            //return View(aduan.ToList()); //for UI
+            return Ok(aduan); //for API
         }
 
         [HttpPost]
         [Route("SortSearchAduan")]
-        public IActionResult TestSortingAndSearching(string sortOrder, string searchString)
+        public IActionResult TestSortingAndSearching(string? sortOrder, string? searchString)
         {
             ViewData["NomoAduanParam"] = String.IsNullOrEmpty(sortOrder) ? "nomor" : "";
             ViewData["Pertanyaan1Param"] = String.IsNullOrEmpty(sortOrder) ? "pertanyaan" : "";
@@ -180,12 +209,13 @@ namespace WBSBE.Controllers
 
             var aduan = clsAduan.searchingData(sortOrder, searchString);
 
-            return View(aduan.ToList());
+            //return View(aduan.ToList()); //for UI
+            return Ok(aduan); //for API
         }
 
         [HttpPost]
         [Route("PaginationAduan")]
-        public IActionResult TestPagination(string sortOrder, string currentFilter, string searchString, int? pageNumber)
+        public IActionResult TestPagination(string? sortOrder, string? currentFilter, string? searchString, int? pageNumber)
         {
             ViewData["CurrentSort"] = sortOrder;
             ViewData["NomoAduanParam"] = String.IsNullOrEmpty(sortOrder) ? "nomor" : "";
