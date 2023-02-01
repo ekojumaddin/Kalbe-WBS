@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net.Mail;
 using System.Text;
@@ -21,8 +22,11 @@ using WBSBE.DAL.Context;
 namespace WBSBE.BussLogic
 {
     public class clsMAduan : IOperation<AduanModel, WBSDBContext>
-    {
+    {       
+        #region Property 
         LoggerManager logger = new LoggerManager();
+        #endregion
+
         public string Delete(string paramTxtId)
         {
             try
@@ -138,22 +142,35 @@ namespace WBSBE.BussLogic
                             Pertanyaan4 = j.txtPertanyaan4
                         }).ToList();
 
-            foreach (var aduan in query)
+
+            foreach (var item in query)
             {
-                listAduan.Add(new AduanModel()
+                AduanModel aduan = new AduanModel();
+                aduan.txtNomorID = item.Nomor;
+                aduan.txtStatus = item.Status;
+                aduan.txtPelapor = item.Pelapor;
+                aduan.txtNIK = item.NIK;
+                aduan.txtNama = item.Nama;
+                aduan.txtTlp = item.Tlp;
+                aduan.txtEmail = item.Email;
+                aduan.txtPertanyaan1 = item.Pertanyaan1;
+                aduan.txtPertanyaan2 = item.Pertanyaan2;
+                aduan.txtPertanyaan3 = item.Pertanyaan3;
+                aduan.txtPertanyaan4 = item.Pertanyaan4;
+                aduan.fileName = new ();
+
+                var listLampiran = context.mAttachment.Where(c => c.mAduan.txtNomorID == item.Nomor && c.bitActive == true).ToList();
+
+                if (listLampiran != null)
                 {
-                    txtNomorID = aduan.Nomor,
-                    txtStatus = aduan.Status,
-                    txtPelapor = aduan.Pelapor,
-                    txtNIK = aduan.NIK,
-                    txtNama = aduan.Nama,
-                    txtTlp = aduan.Tlp,
-                    txtEmail = aduan.Email,
-                    txtPertanyaan1 = aduan.Pertanyaan1,
-                    txtPertanyaan2 = aduan.Pertanyaan2,
-                    txtPertanyaan3 = aduan.Pertanyaan3,
-                    txtPertanyaan4 = aduan.Pertanyaan4
-                });
+                    foreach (var lampiran in listLampiran)
+                    {
+                        var oriFileName = lampiran.txtFileName;
+                        aduan.fileName.Add(oriFileName);
+                    }
+                }
+
+                listAduan.Add(aduan);
             }
 
             return listAduan;
@@ -567,7 +584,7 @@ namespace WBSBE.BussLogic
             attachment.txtFilePath = ClsGlobalClass.GetRootPath + pathAttachment + fileName;
         }
 
-        public List<AduanModel> sortingData(string sortOrder)
+        public List<AduanModel> sortingData(string? sortOrder)
         {
             using (var context = new WBSDBContext())
             {
@@ -613,7 +630,7 @@ namespace WBSBE.BussLogic
             }
         }
 
-        public List<AduanModel> searchingData(string sortOrder, string searchString)
+        public List<AduanModel> searchingData(string? sortOrder, string? searchString)
         {
             using (var context = new WBSDBContext())
             {
@@ -686,5 +703,31 @@ namespace WBSBE.BussLogic
             }
         }
 
+        public (string fileType, byte[] archiveData, string archiveName) DownloadFiles(string nomor)
+        {
+            var zipName = $"Lampiran-{ nomor + "#" + DateTime.Now.ToString("yyyy_MM_dd-HH_mm_ss")}.zip";
+
+            using (MemoryStream ms = new MemoryStream())
+            {
+                using (var context = new WBSDBContext())
+                {
+                    using (var zip = new ZipArchive(ms, ZipArchiveMode.Create, true))
+                    {
+                        var files = context.mAttachment.Where(a => a.mAduan.txtNomorID == nomor && a.bitActive == true).ToList();
+                        foreach (var file in files)
+                        {
+                            byte[] bytes = File.ReadAllBytes(file.txtFilePath);
+                            var entry = zip.CreateEntry(file.txtFileName);
+                            using (var fileStream = new MemoryStream(bytes))
+                            using (var entryStream = entry.Open())
+                            {
+                                fileStream.CopyTo(entryStream);
+                            }
+                        }
+                    }
+                    return ("application/zip", ms.ToArray(), zipName);
+                }                
+            }
+        }
     }
 }

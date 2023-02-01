@@ -43,6 +43,8 @@ namespace WBSBE.Common.Model
         [StringLength(255)]
         public string txtPertanyaan4 { get; set; }
 
+        public List<string> fileName { get; set; }
+
         public List<IFormFile> fileData { get; set; }
 
         public string? message { get; set; }
