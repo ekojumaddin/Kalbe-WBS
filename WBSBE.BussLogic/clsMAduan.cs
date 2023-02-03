@@ -123,49 +123,69 @@ namespace WBSBE.BussLogic
         {
             List<AduanModel> listAduan = new List<AduanModel>();
 
-            var query = (from a in context.mAduan
-                        join j in context.mJawabPertanyaan on a.txtNomorID equals j.txtNomorAduan.txtNomorID
-                        where a.bitActive == true && j.bitActive == true
-                        orderby a.txtNomorID
-                        select new
-                        {
-                            Nomor = a.txtNomorID,
-                            Status = a.txtStatus,
-                            Pelapor = a.txtPelapor,
-                            NIK = a.txtNIK,
-                            Nama = a.txtNama,
-                            Tlp = a.txtTlp,
-                            Email = a.txtEmail,
-                            Pertanyaan1 = j.txtPertanyaan1,
-                            Pertanyaan2 = j.txtPertanyaan2,
-                            Pertanyaan3 = j.txtPertanyaan3,
-                            Pertanyaan4 = j.txtPertanyaan4
-                        }).ToList();
-
+            var query = context.mAduan.Where(a => a.bitActive == true).ToList();
 
             foreach (var item in query)
             {
                 AduanModel aduan = new AduanModel();
-                aduan.txtNomorID = item.Nomor;
-                aduan.txtStatus = item.Status;
-                aduan.txtPelapor = item.Pelapor;
-                aduan.txtNIK = item.NIK;
-                aduan.txtNama = item.Nama;
-                aduan.txtTlp = item.Tlp;
-                aduan.txtEmail = item.Email;
-                aduan.txtPertanyaan1 = item.Pertanyaan1;
-                aduan.txtPertanyaan2 = item.Pertanyaan2;
-                aduan.txtPertanyaan3 = item.Pertanyaan3;
-                aduan.txtPertanyaan4 = item.Pertanyaan4;
-                aduan.fileName = new ();
+                aduan.txtNomorID = item.txtNomorID;
+                aduan.txtStatus = item.txtStatus;
+                aduan.txtPelapor = item.txtPelapor;
+                aduan.txtNIK = item.txtNIK;
+                aduan.txtNama = item.txtNama;
+                aduan.txtTlp = item.txtTlp;
+                aduan.txtEmail = item.txtEmail;
 
-                var listLampiran = context.mAttachment.Where(c => c.mAduan.txtNomorID == item.Nomor && c.bitActive == true).ToList();
+                aduan.listTanyaJawab = new();
+                aduan.fileName = new();
 
-                if (listLampiran != null)
+                var listJawaban = (from j in context.mJawaban
+                                   join p in context.mPertanyaan on j.txtPertanyaan.intPertanyaanID equals p.intPertanyaanID
+                                   where j.bitActive == true && p.bitActive == true && j.txtNomorAduan.txtNomorID == item.txtNomorID &&
+                                   j.intOrderJawaban == p.intOrderPertanyaan
+                                   orderby p.intOrderPertanyaan
+                                   select new
+                                   {
+                                       jwbId = j.intJawabanID,
+                                       ptyId = p.intPertanyaanID,
+                                       orderId = j.intOrderJawaban,
+                                       pertanyaan = p.txtPertanyaan,
+                                       jawaban = j.txtJawaban,
+                                       mandatory = p.bitMandatory
+                                   }).ToList();
+
+
+                if (listJawaban.Count > 0)
+                {
+                    foreach (var itemJawaban in listJawaban)
+                    {
+                        TanyaJawabModel tanyaJawab = new TanyaJawabModel();
+                        tanyaJawab.intJawabanID = itemJawaban.jwbId;
+                        tanyaJawab.intPertanyaanID = itemJawaban.ptyId;
+                        tanyaJawab.intOrderJawaban = itemJawaban.orderId;
+                        tanyaJawab.txtPertanyaan = itemJawaban.pertanyaan;
+                        tanyaJawab.txtJawaban = itemJawaban.jawaban;
+                        if (itemJawaban.mandatory == true)
+                        {
+                            tanyaJawab.isMandatory = "Mandatory";
+                        }
+                        else
+                        {
+                            tanyaJawab.isMandatory = "Optional";
+                        }
+
+                        aduan.listTanyaJawab.Add(tanyaJawab);
+                    }
+                }
+
+                var listLampiran = context.mAttachment.Where(c => c.mAduan.txtNomorID == item.txtNomorID && c.bitActive == true).ToList();
+
+                if (listLampiran.Count > 0)
                 {
                     foreach (var lampiran in listLampiran)
                     {
                         var oriFileName = lampiran.txtFileName;
+
                         aduan.fileName.Add(oriFileName);
                     }
                 }
@@ -630,7 +650,7 @@ namespace WBSBE.BussLogic
             }
         }
 
-        public List<AduanModel> searchingData(string? sortOrder, string? searchString)
+        public List<AduanModel> sortAndSearchByTextBox(string? sortOrder, string? searchString)
         {
             using (var context = new WBSDBContext())
             {
@@ -666,6 +686,56 @@ namespace WBSBE.BussLogic
                     default:
                         query = query.OrderBy(s => s.Nomor);
                         break;
+                }
+
+                foreach (var aduan in query)
+                {
+                    listAduan.Add(new AduanModel()
+                    {
+                        txtNomorID = aduan.Nomor,
+                        txtStatus = aduan.Status,
+                        txtPertanyaan1 = aduan.Pertanyaan1
+                    });
+                }
+
+                return listAduan;
+            }
+        }
+
+        public List<AduanModel> searchByButton(string? status, DateTime? awal, DateTime? akhir)
+        {
+            using (var context = new WBSDBContext())
+            {
+                List<AduanModel> listAduan = new List<AduanModel>();
+
+                var query = from a in context.mAduan
+                            join j in context.mJawabPertanyaan on a.txtNomorID equals j.txtNomorAduan.txtNomorID
+                            where a.bitActive == true && j.bitActive == true
+                            orderby a.txtNomorID
+                            select new
+                            {
+                                Nomor = a.txtNomorID,
+                                Status = a.txtStatus,
+                                Pertanyaan1 = j.txtPertanyaan1,
+                                TglCreated = a.dtmInserted
+                            };
+
+                if (!String.IsNullOrEmpty(status))
+                {
+                    if (status == "Open")
+                    {
+                        query = query.Where(s => s.Status == "Review" || s.Status == "Waiting Set Tim" || s.Status == "Waiting Create Laporan" ||
+                        s.Status == "Waiting Approval" || s.Status == "Waiting Create Summary Investigasi");
+                    }
+                    else if (status == "Closed")
+                    {
+                        query = query.Where(s => s.Status == status);
+                    }                   
+                }
+
+                if (awal != null && akhir != null)
+                {
+                    query = query.Where(x => x.TglCreated >= awal && x.TglCreated <= akhir);
                 }
 
                 foreach (var aduan in query)

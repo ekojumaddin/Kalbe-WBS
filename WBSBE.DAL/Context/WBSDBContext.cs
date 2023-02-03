@@ -28,8 +28,9 @@ namespace WBSBE.DAL.Context
         public virtual DbSet<mJawabPertanyaan> mJawabPertanyaan { get; set; }
         public virtual DbSet<mAttachment> mAttachment { get; set; }
         public virtual DbSet<mConfig> mConfig { get; set; }
-
         public virtual DbSet<mLookup> mLookup { get; set; }
+        public virtual DbSet<mPertanyaan> mPertanyaan { get; set; }
+        public virtual DbSet<mJawaban> mJawaban { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
