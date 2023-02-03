@@ -53,11 +53,11 @@ namespace WBSBE.Controllers
         #region Download File
         [HttpPost]
         [Route("getAttachmentById")]
-        public IActionResult downloadLampiran(string nomor)
+        public IActionResult downloadLampiran(AttachmentModel attachment)
         {
             try
             {
-                var (fileType, archiveData, archiveName) = clsAduan.DownloadFiles(nomor);
+                var (fileType, archiveData, archiveName) = clsAduan.DownloadFiles(attachment.nomor);
 
                 return File(archiveData, fileType, archiveName);
             }
@@ -207,7 +207,21 @@ namespace WBSBE.Controllers
             ViewData["StatusParam"] = String.IsNullOrEmpty(sortOrder) ? "status" : "";
             ViewData["CurrentFilter"] = searchString;
 
-            var aduan = clsAduan.searchingData(sortOrder, searchString);
+            var aduan = clsAduan.sortAndSearchByTextBox(sortOrder, searchString);
+
+            //return View(aduan.ToList()); //for UI
+            return Ok(aduan); //for API
+        }
+
+        [HttpPost]
+        [Route("SearchAduanByButton")]
+        public IActionResult SearchDataByButton (string? status, DateTime? awal, DateTime? akhir)
+        {
+            ViewData["StatusParam"] = String.IsNullOrEmpty(status) ? "status" : "";
+            ViewData["FromDate"] = awal;
+            ViewData["ToDate"] = akhir;
+
+            var aduan = clsAduan.searchByButton(status, awal, akhir);
 
             //return View(aduan.ToList()); //for UI
             return Ok(aduan); //for API
@@ -233,7 +247,7 @@ namespace WBSBE.Controllers
 
             ViewData["CurrentFilter"] = searchString;
 
-            var aduan = clsAduan.searchingData(sortOrder, searchString);
+            var aduan = clsAduan.sortAndSearchByTextBox(sortOrder, searchString);
 
             int pageSize = 10;
 

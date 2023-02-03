@@ -47,6 +47,7 @@ namespace WBSBE.Common.Model
 
         public List<IFormFile> fileData { get; set; }
 
+        public List<TanyaJawabModel> listTanyaJawab { get; set; }
         public string? message { get; set; }
     }
 }

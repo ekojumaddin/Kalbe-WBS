@@ -14,6 +14,7 @@ namespace WBSBE.Common.Entity.WBS
         {
             listAttachments = new List<mAttachment>();
             answerForQuestion = new List<mJawabPertanyaan>();
+            listJawaban = new List<mJawaban>();
         }
 
         [Key]
@@ -52,5 +53,7 @@ namespace WBSBE.Common.Entity.WBS
         public List<mAttachment> listAttachments { get; set; }
 
         public List<mJawabPertanyaan> answerForQuestion { get; set; }
+
+        public List<mJawaban> listJawaban { get; set; }
     }
 }
