@@ -138,6 +138,37 @@ namespace WBSBE.Controllers
         }
 
         [HttpPost]
+        [Route("ViewAduan")]
+        public IActionResult view(clsGlobalAPI apiDat)
+        {
+            if (check == null)
+            {
+                return BadRequest();
+            }
+
+            try
+            {
+                JObject param = JObject.Parse(apiDat.objRequestData.ToString());
+                var dtParam = JsonConvert.DeserializeObject<AduanModel>(param.ToString());
+                var objData = clsAduan.GetDataById(dtParam.txtNomorID);
+
+                if (objData.message != null)
+                {
+                    ResponseType type = ResponseType.NotFound;
+                    apiDat.txtMessage = objData.message;
+                    return Ok(apiDat);
+                }
+
+                apiDat = clsGlobalAPI.CreateResult(apiDat, true, objData, string.Empty, string.Empty);
+                return Ok(apiDat);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ResponseHandler.GetExceptionResponse(ex));
+            }
+        }
+
+        [HttpPost]
         [Route("UpdateAduan")]
         public IActionResult updateData([FromForm] AduanModel aduan)
         {
