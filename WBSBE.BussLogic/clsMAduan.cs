@@ -231,48 +231,67 @@ namespace WBSBE.BussLogic
         {
             using (var context = new WBSDBContext())
             {
-                var query = (from a in context.mAduan
-                             join j in context.mJawabPertanyaan on a.txtNomorID equals j.txtNomorAduan.txtNomorID
-                             join l in context.mAttachment on a.txtNomorID equals l.mAduan.txtNomorID
-                             where a.txtNomorID == paramTxtId
-                                 select new
-                                 {
-                                     Nomor = a.txtNomorID,
-                                     Status = a.txtStatus,
-                                     Pelapor = a.txtPelapor,
-                                     NIK = a.txtNIK,
-                                     Nama = a.txtNama,
-                                     Tlp = a.txtTlp,
-                                     Email = a.txtEmail,
-                                     Pertanyaan1 = j.txtPertanyaan1,
-                                     Pertanyaan2 = j.txtPertanyaan2,
-                                     Pertanyaan3 = j.txtPertanyaan3,
-                                     Pertanyaan4 = j.txtPertanyaan4
-                                 }).ToList();
+                var item = context.mAduan.Where(a => a.txtNomorID == paramTxtId && a.bitActive == true).FirstOrDefault();
 
-                var aduan = query.FirstOrDefault();
+                AduanModel aduan = new AduanModel();
+                aduan.listTanyaJawab = new();
+                aduan.fileName = new();
 
-                AduanModel model = new AduanModel();
-                if (query.Count > 0)
+                if (item != null)
                 {
-                    model.txtNomorID = aduan.Nomor;
-                    model.txtStatus = aduan.Status;
-                    model.txtPelapor = aduan.Pelapor;
-                    model.txtNIK = aduan.NIK;
-                    model.txtNama = aduan.Nama;
-                    model.txtTlp = aduan.Tlp;
-                    model.txtEmail = aduan.Email;
-                    model.txtPertanyaan1 = aduan.Pertanyaan1;
-                    model.txtPertanyaan2 = aduan.Pertanyaan2;
-                    model.txtPertanyaan3 = aduan.Pertanyaan3;
-                    model.txtPertanyaan4 = aduan.Pertanyaan4;
+                    aduan.txtNomorID = item.txtNomorID;
+                    aduan.txtStatus = item.txtStatus;
+                    aduan.txtPelapor = item.txtPelapor;
+                    aduan.txtNIK = item.txtNIK;
+                    aduan.txtNama = item.txtNama;
+                    aduan.txtTlp = item.txtTlp;
+                    aduan.txtEmail = item.txtEmail;
+
+                    var listJawaban = (from j in context.mJawaban
+                                       join p in context.mPertanyaan on j.txtPertanyaan.intPertanyaanID equals p.intPertanyaanID
+                                       where j.bitActive == true && p.bitActive == true && j.txtNomorAduan.txtNomorID == item.txtNomorID &&
+                                       j.intOrderJawaban == p.intOrderPertanyaan
+                                       orderby p.intOrderPertanyaan
+                                       select new
+                                       {
+                                           jwbId = j.intJawabanID,
+                                           ptyId = p.intPertanyaanID,
+                                           orderId = j.intOrderJawaban,
+                                           pertanyaan = p.txtPertanyaan,
+                                           jawaban = j.txtJawaban,
+                                           mandatory = p.bitMandatory
+                                       }).ToList();
+
+                    if (listJawaban.Count > 0)
+                    {
+                        foreach (var itemJawaban in listJawaban)
+                        {
+                            TanyaJawabModel tanyaJawab = new TanyaJawabModel();
+                            tanyaJawab.txtPertanyaan = itemJawaban.pertanyaan;
+                            tanyaJawab.txtJawaban = itemJawaban.jawaban;
+
+                            aduan.listTanyaJawab.Add(tanyaJawab);
+                        }
+                    }
+
+                    var listLampiran = context.mAttachment.Where(c => c.mAduan.txtNomorID == item.txtNomorID && c.bitActive == true).ToList();
+
+                    if (listLampiran.Count > 0)
+                    {
+                        foreach (var lampiran in listLampiran)
+                        {
+                            var oriFileName = lampiran.txtFileName;
+
+                            aduan.fileName.Add(oriFileName);
+                        }
+                    }
                 }
                 else 
                 {
-                    model.message = "Data tidak di temukan";
+                    aduan.message = "Data tidak di temukan";
                 }
 
-                return model;
+                return aduan;
             }
         }
 
