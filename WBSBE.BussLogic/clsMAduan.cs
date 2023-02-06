@@ -53,17 +53,17 @@ namespace WBSBE.BussLogic
 
                     if (dt.bitActive != false) {
 
-                        dt.answerForQuestion = context.mJawabPertanyaan.Where(x => x.txtNomorAduan.txtNomorID == paramTxtId).ToList();
+                        dt.listJawaban = context.mJawaban.Where(x => x.txtNomorAduan.txtNomorID == paramTxtId).ToList();
                         dt.listAttachments = context.mAttachment.Where(x => x.mAduan.txtNomorID == paramTxtId).ToList();
                         dt.bitActive = false;
                         dt.dtmUpdated = DateTime.UtcNow;
                         dt.txtUpdatedBy = "Manual";
 
-                    foreach (var dtPertanyaan in dt.answerForQuestion)
+                    foreach (var dtJawaban in dt.listJawaban)
                     {
-                        dtPertanyaan.bitActive = false;
-                        dtPertanyaan.dtmUpdated = DateTime.UtcNow;
-                        dtPertanyaan.txtUpdatedBy = "Manual";
+                        dtJawaban.bitActive = false;
+                        dtJawaban.dtmUpdated = DateTime.UtcNow;
+                        dtJawaban.txtUpdatedBy = "Manual";
                     }
 
                     foreach (var dtAttachment in dt.listAttachments)
@@ -72,27 +72,25 @@ namespace WBSBE.BussLogic
                         dtAttachment.dtmUpdated = DateTime.UtcNow;
                         dtAttachment.txtUpdatedBy = "Manual";
                     }
-
                         context.Update(dt);
                         context.SaveChanges();
                         transaction.Commit();
                         return paramTxtId;
-
                     }
 
                     else
                     {
-                        dt.answerForQuestion = context.mJawabPertanyaan.Where(x => x.txtNomorAduan.txtNomorID == paramTxtId).ToList();
+                        dt.listJawaban = context.mJawaban.Where(x => x.txtNomorAduan.txtNomorID == paramTxtId).ToList();
                         dt.listAttachments = context.mAttachment.Where(x => x.mAduan.txtNomorID == paramTxtId).ToList();
                         dt.bitActive = true;
                         dt.dtmUpdated = DateTime.UtcNow;
                         dt.txtUpdatedBy = "Manual";
 
-                        foreach (var dtPertanyaan in dt.answerForQuestion)
+                        foreach (var dtJawaban in dt.listJawaban)
                         {
-                            dtPertanyaan.bitActive = true;
-                            dtPertanyaan.dtmUpdated = DateTime.UtcNow;
-                            dtPertanyaan.txtUpdatedBy = "Manual";
+                            dtJawaban.bitActive = true;
+                            dtJawaban.dtmUpdated = DateTime.UtcNow;
+                            dtJawaban.txtUpdatedBy = "Manual";
                         }
 
                         foreach (var dtAttachment in dt.listAttachments)
@@ -106,9 +104,7 @@ namespace WBSBE.BussLogic
                         context.SaveChanges();
                         transaction.Commit();
                         return paramTxtId;
-                    }
-
-                    
+                    }                    
                 }
                 catch (Exception ex)
                 {
@@ -140,7 +136,7 @@ namespace WBSBE.BussLogic
                 aduan.fileName = new();
 
                 var listJawaban = (from j in context.mJawaban
-                                   join p in context.mPertanyaan on j.txtPertanyaan.intPertanyaanID equals p.intPertanyaanID
+                                   join p in context.mPertanyaan on j.intPertanyaanID equals p.intPertanyaanID
                                    where j.bitActive == true && p.bitActive == true && j.txtNomorAduan.txtNomorID == item.txtNomorID &&
                                    j.intOrderJawaban == p.intOrderPertanyaan
                                    orderby p.intOrderPertanyaan
@@ -248,7 +244,7 @@ namespace WBSBE.BussLogic
                     aduan.txtEmail = item.txtEmail;
 
                     var listJawaban = (from j in context.mJawaban
-                                       join p in context.mPertanyaan on j.txtPertanyaan.intPertanyaanID equals p.intPertanyaanID
+                                       join p in context.mPertanyaan on j.intPertanyaanID equals p.intPertanyaanID
                                        where j.bitActive == true && p.bitActive == true && j.txtNomorAduan.txtNomorID == item.txtNomorID &&
                                        j.intOrderJawaban == p.intOrderPertanyaan
                                        orderby p.intOrderPertanyaan
@@ -330,17 +326,28 @@ namespace WBSBE.BussLogic
                 aduan.dtmInserted = DateTime.UtcNow;
                 aduan.txtInsertedBy = "Manual";
                 aduan.bitActive = true;
+                
+                foreach (var item in paramData.listJawaban)
+                {
+                    mJawaban jawaban = new mJawaban();
+                    int j = (int)item.intPertanyaanID;
+                    for (int i = 0; i <= j; i++)
+                    {
+                        jawaban.intOrderJawaban = i;
+                    }
+                    jawaban.txtJawaban = item.txtJawaban;
+                    jawaban.bitActive = true;
+                    jawaban.dtmInserted = DateTime.UtcNow;
+                    jawaban.txtInsertedBy = "Manual";
 
-                mJawabPertanyaan jawaban = new mJawabPertanyaan();
-                jawaban.txtPertanyaan1 = paramData.txtPertanyaan1;
-                jawaban.txtPertanyaan2 = paramData.txtPertanyaan2;
-                jawaban.txtPertanyaan3 = paramData.txtPertanyaan3;
-                jawaban.txtPertanyaan4 = paramData.txtPertanyaan4;
-                jawaban.dtmInserted = DateTime.UtcNow;
-                jawaban.txtInsertedBy = "Manual";
-                jawaban.bitActive = true;
+                    if (item.intPertanyaanID.HasValue)
+                    {
+                        int idPertanyaan = j;
+                        jawaban.intPertanyaanID = idPertanyaan;
+                    }
 
-                aduan.answerForQuestion.Add(jawaban);
+                    aduan.listJawaban.Add(jawaban);
+                }
 
                 foreach (IFormFile file in paramData.fileData)
                 {
@@ -460,63 +467,62 @@ namespace WBSBE.BussLogic
                     existAduan.dtmUpdated = DateTime.UtcNow;
                     existAduan.txtUpdatedBy = "Manual"; //will be change to user login
 
-                    var existJawaban = context.mJawabPertanyaan.Where(x => x.txtNomorAduan.txtNomorID == paramData.txtNomorID && x.bitActive == true).FirstOrDefault();
-                    existJawaban.txtPertanyaan1 = paramData.txtPertanyaan1;
-                    existJawaban.txtPertanyaan2 = paramData.txtPertanyaan2;
-                    existJawaban.txtPertanyaan3 = paramData.txtPertanyaan3;
-                    existJawaban.txtPertanyaan4 = paramData.txtPertanyaan4;
-                    existJawaban.dtmUpdated = DateTime.UtcNow;
-                    existJawaban.txtUpdatedBy = "Manual"; //will be change to user login
-                    existAduan.answerForQuestion.Add(existJawaban);
+                    var existJawaban = context.mJawaban.Where(x => x.txtNomorAduan.txtNomorID == paramData.txtNomorID && x.bitActive == true).FirstOrDefault();
+
+                    foreach (var item in paramData.listJawaban)
+                    {
+                        int j = (int)item.intPertanyaanID;
+                        for (int i = 0; i <= j; i++)
+                        {
+                            existJawaban.intOrderJawaban = i;
+                        }
+                        existJawaban.txtJawaban = item.txtJawaban;
+                        existJawaban.bitActive = true;
+                        existJawaban.dtmInserted = DateTime.UtcNow;
+                        existJawaban.txtInsertedBy = "Manual";
+
+                        if (item.intPertanyaanID.HasValue)
+                        {
+                            int idPertanyaan = j;
+                            existJawaban.intPertanyaanID = idPertanyaan;
+                        }
+
+                        existAduan.listJawaban.Add(existJawaban);
+                    }
 
                     if (paramData.fileData != null)
                     {
+                        List<string> listFileName = new List<string>();
+
                         foreach (IFormFile file in paramData.fileData)
                         {
                             var existAttachment = context.mAttachment.Where(x => x.mAduan.txtNomorID == paramData.txtNomorID && x.txtFileName == file.FileName && x.bitActive == true).FirstOrDefault();
-                            var listAttachment = context.mAttachment.Where(x => x.mAduan.txtNomorID == paramData.txtNomorID && x.bitActive == true).Select(x => x.txtFileName).ToList();
-
-                            if (existAttachment != null && listAttachment.Exists(x => x == file.FileName))
+                            //update attachment existing
+                            if (existAttachment != null)
                             {
+                                string message = AttachmentValidation(file, context, existAttachment);
 
-                                foreach (var attach in listAttachment)
+                                if (String.IsNullOrEmpty(message))
                                 {
-                                    if (attach == file.FileName)
-                                    {
-                                        string message = AttachmentValidation(file, context, existAttachment);
+                                    FileInfo fi = new FileInfo(file.FileName);
+                                    var fileExt = fi.Extension;
+                                    existAttachment.txtEncryptedName = clsCommonFunction.saveAttachment(file, ClsGlobalConstant.PathAttachmentConstant.pathAttachmentTest, existAttachment.txtEncryptedName);
+                                    var pathAttachment = ClsGlobalConstant.PathAttachmentConstant.pathAttachmentTest;
+                                    pathAttachment = pathAttachment.Replace("~/", "").Replace("/", Path.DirectorySeparatorChar.ToString());
+                                    existAttachment.txtFilePath = ClsGlobalClass.GetRootPath + pathAttachment + existAttachment.txtFileName;
+                                    existAttachment.dtmUpdated = DateTime.UtcNow;
+                                    existAttachment.txtUpdatedBy = "Manual"; //will be change to user login                         
 
-                                        if (String.IsNullOrEmpty(message))
-                                        {
-                                            FileInfo fi = new FileInfo(file.FileName);
-                                            var fileExt = fi.Extension;
-                                            existAttachment.txtEncryptedName = clsCommonFunction.saveAttachment(file, ClsGlobalConstant.PathAttachmentConstant.pathAttachmentTest, existAttachment.txtEncryptedName);
-                                            var pathAttachment = ClsGlobalConstant.PathAttachmentConstant.pathAttachmentTest;
-                                            pathAttachment = pathAttachment.Replace("~/", "").Replace("/", Path.DirectorySeparatorChar.ToString());
-                                            existAttachment.txtFilePath = ClsGlobalClass.GetRootPath + pathAttachment + existAttachment.txtFileName;
-                                            existAttachment.dtmUpdated = DateTime.UtcNow;
-                                            existAttachment.txtUpdatedBy = "Manual"; //will be change to user login                         
-
-                                            existAduan.listAttachments.Add(existAttachment);
-                                        }
-                                        else
-                                        {
-                                            return ResponseHandler.SendResponse(message);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        var fullPath = Path.GetFullPath(ClsGlobalClass.GetRootPath + ClsGlobalConstant.PathAttachmentConstant.pathAttachmentTest);
-                                        var nonActivateAttachment = context.mAttachment.Where(x => x.mAduan.txtNomorID == paramData.txtNomorID && x.bitActive == true && x.txtFileName == attach).FirstOrDefault();
-                                        clsCommonFunction.checkAndDeleteAttacment(fullPath, nonActivateAttachment.txtEncryptedName);
-
-                                        nonActivateAttachment.bitActive = false;
-
-                                        existAduan.listAttachments.Add(nonActivateAttachment);
-                                    }
+                                    existAduan.listAttachments.Add(existAttachment);
+                                }
+                                else
+                                {
+                                    return ResponseHandler.SendResponse(message);
                                 }
                             }
-                            else
+                            else 
                             {
+                                //create new attachment
                                 mAttachment attachment = new mAttachment();
                                 string message = AttachmentValidation(file, context, attachment);
 
@@ -535,6 +541,25 @@ namespace WBSBE.BussLogic
                                 {
                                     return ResponseHandler.SendResponse(message);
                                 }
+                            }
+
+                            string fileName = Path.GetFileName(file.FileName);
+                            listFileName.Add(fileName);
+                        }
+
+                        var listAttachment = context.mAttachment.Where(x => x.mAduan.txtNomorID == paramData.txtNomorID && x.bitActive == true).Select(x => x.txtFileName).ToList();
+                        foreach (var lampiran in listAttachment)
+                        {
+                            if (!listFileName.Exists(x => x == lampiran))
+                            {
+                                //nonactive attachment existing
+                                var fullPath = Path.GetFullPath(ClsGlobalClass.GetRootPath + ClsGlobalConstant.PathAttachmentConstant.pathAttachmentTest);
+                                var nonActivateAttachment = context.mAttachment.Where(x => x.mAduan.txtNomorID == paramData.txtNomorID && x.bitActive == true && x.txtFileName == lampiran).FirstOrDefault();
+                                clsCommonFunction.checkAndDeleteAttacment(fullPath, nonActivateAttachment.txtEncryptedName);
+
+                                nonActivateAttachment.bitActive = false;
+
+                                existAduan.listAttachments.Add(nonActivateAttachment);
                             }
                         }
                     }
@@ -629,25 +654,25 @@ namespace WBSBE.BussLogic
             {
                 List<AduanModel> listAduan = new List<AduanModel>();
                 var query = from a in context.mAduan
-                            join j in context.mJawabPertanyaan on a.txtNomorID equals j.txtNomorAduan.txtNomorID
-                            where a.bitActive == true && j.bitActive == true
-                            orderby a.txtNomorID
-                            select new
-                            {
-                                Nomor = a.txtNomorID,
-                                Status = a.txtStatus,
-                                Pertanyaan1 = j.txtPertanyaan1
-                            };
+                             join j in context.mJawaban on a.txtNomorID equals j.txtNomorAduan.txtNomorID
+                             where a.bitActive == true && j.bitActive == true && j.intOrderJawaban == 1
+                             orderby a.txtNomorID
+                             select new
+                             {
+                                 Nomor = a.txtNomorID,
+                                 Status = a.txtStatus,
+                                 Pertanyaan1 = j.txtJawaban
+                             };
 
                 switch (sortOrder)
                 {
                     case "nomor":
                         query = query.OrderByDescending(s => s.Nomor);
                         break;
-                    case "pertanyaan":
+                    case "status":
                         query = query.OrderBy(s => s.Status);
                         break;
-                    case "status":
+                    case "pertanyaan":
                         query = query.OrderByDescending(s => s.Pertanyaan1);
                         break;
                     default:
@@ -661,7 +686,7 @@ namespace WBSBE.BussLogic
                     {
                         txtNomorID = aduan.Nomor,
                         txtStatus = aduan.Status,
-                        txtPertanyaan1 = aduan.Pertanyaan1
+                        txtJawabPertanyaan1 = aduan.Pertanyaan1
                     });
                 }
 
@@ -676,14 +701,14 @@ namespace WBSBE.BussLogic
                 List<AduanModel> listAduan = new List<AduanModel>();
 
                 var query = from a in context.mAduan
-                            join j in context.mJawabPertanyaan on a.txtNomorID equals j.txtNomorAduan.txtNomorID
-                            where a.bitActive == true && j.bitActive == true
+                            join j in context.mJawaban on a.txtNomorID equals j.txtNomorAduan.txtNomorID
+                            where a.bitActive == true && j.bitActive == true && j.intOrderJawaban == 1
                             orderby a.txtNomorID
                             select new
                             {
                                 Nomor = a.txtNomorID,
                                 Status = a.txtStatus,
-                                Pertanyaan1 = j.txtPertanyaan1
+                                Pertanyaan1 = j.txtJawaban
                             };
 
                 if (!String.IsNullOrEmpty(searchString))
@@ -696,10 +721,10 @@ namespace WBSBE.BussLogic
                     case "nomor":
                         query = query.OrderByDescending(s => s.Nomor);
                         break;
-                    case "pertanyaan":
+                    case "status":
                         query = query.OrderBy(s => s.Status);
                         break;
-                    case "status":
+                    case "pertanyaan":
                         query = query.OrderByDescending(s => s.Pertanyaan1);
                         break;
                     default:
@@ -713,7 +738,7 @@ namespace WBSBE.BussLogic
                     {
                         txtNomorID = aduan.Nomor,
                         txtStatus = aduan.Status,
-                        txtPertanyaan1 = aduan.Pertanyaan1
+                        txtJawabPertanyaan1 = aduan.Pertanyaan1
                     });
                 }
 
@@ -728,14 +753,14 @@ namespace WBSBE.BussLogic
                 List<AduanModel> listAduan = new List<AduanModel>();
 
                 var query = from a in context.mAduan
-                            join j in context.mJawabPertanyaan on a.txtNomorID equals j.txtNomorAduan.txtNomorID
-                            where a.bitActive == true && j.bitActive == true
+                            join j in context.mJawaban on a.txtNomorID equals j.txtNomorAduan.txtNomorID
+                            where a.bitActive == true && j.bitActive == true && j.intOrderJawaban == 1
                             orderby a.txtNomorID
                             select new
                             {
                                 Nomor = a.txtNomorID,
                                 Status = a.txtStatus,
-                                Pertanyaan1 = j.txtPertanyaan1,
+                                Pertanyaan1 = j.txtJawaban,
                                 TglCreated = a.dtmInserted
                             };
 
@@ -763,7 +788,7 @@ namespace WBSBE.BussLogic
                     {
                         txtNomorID = aduan.Nomor,
                         txtStatus = aduan.Status,
-                        txtPertanyaan1 = aduan.Pertanyaan1
+                        txtJawabPertanyaan1 = aduan.Pertanyaan1
                     });
                 }
 

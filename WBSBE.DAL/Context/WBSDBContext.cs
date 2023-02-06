@@ -25,7 +25,6 @@ namespace WBSBE.DAL.Context
         public virtual DbSet<TestDb> TestDbs { get; set; }
         public virtual DbSet<TestDb2> TestDb2s { get; set; }
         public virtual DbSet<mAduan> mAduan { get; set; }
-        public virtual DbSet<mJawabPertanyaan> mJawabPertanyaan { get; set; }
         public virtual DbSet<mAttachment> mAttachment { get; set; }
         public virtual DbSet<mConfig> mConfig { get; set; }
         public virtual DbSet<mLookup> mLookup { get; set; }

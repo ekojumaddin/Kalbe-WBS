@@ -32,22 +32,36 @@ namespace WBSBE.Common.Model
         public string txtEmail { get; set; }
 
         [StringLength(255)]
-        public string txtPertanyaan1 { get; set; }
+        public string? txtJawabPertanyaan1 { get; set; }
 
-        [StringLength(255)]
-        public string txtPertanyaan2 { get; set; }
+        //[StringLength(255)]
+        //public string? txtPertanyaan2 { get; set; }
 
-        [StringLength(255)]
-        public string txtPertanyaan3 { get; set; }
+        //[StringLength(255)]
+        //public string? txtPertanyaan3 { get; set; }
 
-        [StringLength(255)]
-        public string txtPertanyaan4 { get; set; }
+        //[StringLength(255)]
+        //public string? txtPertanyaan4 { get; set; }
 
-        public List<string> fileName { get; set; }
+        public List<TanyaJawabModel>? listJawaban { get; set; } = new List<TanyaJawabModel>();
+
+        public List<string>? fileName { get; set; }
 
         public List<IFormFile> fileData { get; set; }
 
-        public List<TanyaJawabModel> listTanyaJawab { get; set; }
+        public List<TanyaJawabModel>? listTanyaJawab { get; set; }
+
+        //public List<Byte[]> fileByte { get; set; }
+
+        //public List<ByteArrayContent> fileByteArrayContent { get; set; }
+
+        //public List<MemoryStream> fileMemoryStream { get; set; }
+
+        //public List<FileStream> fileStream { get; set; }
+
+        //public List<StreamReader> streamReader { get; set; }
+
+        //public List<FileContentResult> fileContent { get; set; }
         public string? message { get; set; }
     }
 }
