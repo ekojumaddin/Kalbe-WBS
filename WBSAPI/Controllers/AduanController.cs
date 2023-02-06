@@ -32,6 +32,7 @@ namespace WBSBE.Controllers
         }
         #endregion
 
+        #region Get All Aduan
         [HttpPost]
         [Route("GetAllAduan")]
         public IActionResult getAllData(clsGlobalAPI apiDat)
@@ -49,6 +50,7 @@ namespace WBSBE.Controllers
                 return BadRequest(ResponseHandler.GetExceptionResponse(ex));
             }
         }
+        #endregion
 
         #region Download File
         [HttpPost]
@@ -69,14 +71,15 @@ namespace WBSBE.Controllers
         }
         #endregion
 
+        #region Create Aduan
         [HttpPost]
         [Route("CreateAduan")]
         public IActionResult createData([FromForm] AduanModel aduan)
         {
-            if (aduan == null || aduan.fileData == null)
+            if (aduan.fileData == null)
             {
                 ResponseType type = ResponseType.Failure;
-                string message = "Data Aduan dan atau Bukti Pendukung tidak boleh kosong";
+                string message = "Bukti Pendukung tidak boleh kosong";
                 return BadRequest(ResponseHandler.GetAppResponse(type, null, message));
             }
             else if (aduan.txtPelapor == "Employee" && aduan.txtNIK == null)
@@ -85,7 +88,7 @@ namespace WBSBE.Controllers
                 string message = "Silahkan input data NIK";
                 return BadRequest(ResponseHandler.GetAppResponse(type, null, message));
             }
-            else if (aduan.txtPertanyaan1 == null || aduan.txtPertanyaan2 == null || aduan.txtPertanyaan3 == null || aduan.txtPertanyaan4 == null)
+            else if (aduan.listJawaban.Count == 0)
             {
                 ResponseType type = ResponseType.Failure;
                 string message = "Semua pertanyaan wajib dijawab";
@@ -105,7 +108,9 @@ namespace WBSBE.Controllers
                 }
             }
         }
+        #endregion
 
+        #region Check Aduan
         [HttpPost]
         [Route("CheckAduan")]
         public IActionResult check(clsGlobalAPI apiDat)
@@ -136,7 +141,9 @@ namespace WBSBE.Controllers
                 return BadRequest(ResponseHandler.GetExceptionResponse(ex));
             }
         }
+        #endregion
 
+        #region View Aduan
         [HttpPost]
         [Route("ViewAduan")]
         public IActionResult view(clsGlobalAPI apiDat)
@@ -167,15 +174,17 @@ namespace WBSBE.Controllers
                 return BadRequest(ResponseHandler.GetExceptionResponse(ex));
             }
         }
+        #endregion
 
+        #region View Aduan
         [HttpPost]
         [Route("UpdateAduan")]
         public IActionResult updateData([FromForm] AduanModel aduan)
         {
-            if (aduan == null || aduan.fileData == null)
+            if (aduan.fileData == null)
             {
                 ResponseType type = ResponseType.Failure;
-                string message = "Data Aduan dan atau Bukti Pendukung tidak boleh kosong";
+                string message = "Bukti Pendukung tidak boleh kosong";
                 return BadRequest(ResponseHandler.GetAppResponse(type, null, message));
             }
             else if (aduan.txtPelapor == "Employee" && aduan.txtNIK == null)
@@ -184,7 +193,7 @@ namespace WBSBE.Controllers
                 string message = "Silahkan input data NIK";
                 return BadRequest(ResponseHandler.GetAppResponse(type, null, message));
             }
-            else if (aduan.txtPertanyaan1 == null || aduan.txtPertanyaan2 == null || aduan.txtPertanyaan3 == null || aduan.txtPertanyaan4 == null)
+            else if (aduan.listJawaban.Count == 0)
             {
                 ResponseType type = ResponseType.Failure;
                 string message = "Semua pertanyaan wajib dijawab";
@@ -204,7 +213,9 @@ namespace WBSBE.Controllers
                 }
             }
         }
+        #endregion
 
+        #region Change Status Aduan
         [HttpPost]
         [Route("ChangeStatusAduan")]
         public IActionResult deleteData(clsGlobalAPI apiDat)
@@ -214,6 +225,7 @@ namespace WBSBE.Controllers
             apiDat.objData = clsAduan.Delete(dtParam.txtNomorID);
             return Ok(apiDat);
         }
+        #endregion
 
         [HttpPost]
         [Route("SortAduan")]

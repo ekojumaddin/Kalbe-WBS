@@ -28,8 +28,8 @@ namespace WBSBE.Common.Entity.WBS
         public DateTime? dtmUpdated { get; set; }
         public bool bitActive { get; set; }
 
-        public virtual mAduan txtNomorAduan { get; set; }
+        public int intPertanyaanID { get; set; }
 
-        public virtual mPertanyaan txtPertanyaan { get; set; }
+        public virtual mAduan txtNomorAduan { get; set; }
     }
 }
