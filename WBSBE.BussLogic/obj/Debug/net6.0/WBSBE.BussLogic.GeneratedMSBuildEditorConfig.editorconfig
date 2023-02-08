@@ -8,4 +8,4 @@ build_property.PlatformNeutralAssembly =
 build_property.EnforceExtendedAnalyzerRules = 
 build_property._SupportedPlatformList = Linux,macOS,Windows
 build_property.RootNamespace = WBSBE.BussLogic
-build_property.ProjectDir = D:\kalbe\kalbe-wbs\Kalbe-WBS\Kalbe-WBS\WBSBE.BussLogic\
+build_property.ProjectDir = D:\kalbe\wbs-main\WBSBE.BussLogic\

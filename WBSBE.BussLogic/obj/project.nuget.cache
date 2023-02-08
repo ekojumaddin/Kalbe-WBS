@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "tcvxB2p0/a10n25CPOJqTf57LTVL4+6At14TC4AYSlckoexp2+jPuSxnFWuDPYdDUVI6vBHdhhisjHbdDPtb8Q==",
+  "dgSpecHash": "aBsQx0lLj40b2M1ZilpYMhKt0698u1PQOMOgcWEJNzSbBmL9uMCdbYDvYbEg7xR8uLrjJIySCAQ1udnqprq/vQ==",
   "success": true,
-  "projectFilePath": "D:\\kalbe\\kalbe-wbs\\Kalbe-WBS\\Kalbe-WBS\\WBSBE.BussLogic\\WBSBE.BussLogic.csproj",
+  "projectFilePath": "D:\\kalbe\\wbs-main\\WBSBE.BussLogic\\WBSBE.BussLogic.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Switomo Santoso\\.nuget\\packages\\microsoft.aspnetcore.http.abstractions\\2.2.0\\microsoft.aspnetcore.http.abstractions.2.2.0.nupkg.sha512",
     "C:\\Users\\Switomo Santoso\\.nuget\\packages\\microsoft.aspnetcore.http.features\\2.2.0\\microsoft.aspnetcore.http.features.2.2.0.nupkg.sha512",

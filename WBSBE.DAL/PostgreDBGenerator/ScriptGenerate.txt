@@ -1,1 +1,1 @@
-﻿Scaffold-DbContext "Server=10.104.1.134;Database=WBSDB;User id=usrWBSDB;Password=usrWBSDB;" Npgsql.EntityFrameworkCore.PostgreSQL -OutputDir PostgreDBGenerator -Tables "TestDB2" -Force
+﻿Scaffold-DbContext "Server=10.104.1.134;Database=WBSDB;User id=usrWBSDB;Password=usrWBSDB;" Npgsql.EntityFrameworkCore.PostgreSQL -OutputDir PostgreDBGenerator -Tables "mAduan" -Force

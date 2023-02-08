@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>WBSBE</name>
+    </assembly>
+    <members>
+        <member name="T:WBSBE.Library.CrossSiteScriptingValidation">
+            <summary>
+            Imported from System.Web.CrossSiteScriptingValidation Class
+            </summary>
+        </member>
+    </members>
+</doc>

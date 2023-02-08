@@ -17,12 +17,20 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
+    },
+    "Profile 1": {
+      "commandName": "IIS",
+      "launchBrowser": true
     }
   },
   "$schema": "https://json.schemastore.org/launchsettings.json",
   "iisSettings": {
     "windowsAuthentication": false,
     "anonymousAuthentication": true,
+    "iis": {
+      "applicationUrl": "http://localhost/WBSAPI",
+      "sslPort": 0
+    },
     "iisExpress": {
       "applicationUrl": "http://localhost:8719",
       "sslPort": 0

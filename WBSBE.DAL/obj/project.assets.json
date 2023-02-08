@@ -923,6 +923,7 @@
           "Microsoft.AspNetCore.Http.Abstractions": "2.2.0",
           "Microsoft.AspNetCore.Mvc.NewtonsoftJson": "6.0.13",
           "Microsoft.AspNetCore.Mvc.Versioning.ApiExplorer": "5.0.0",
+          "Microsoft.EntityFrameworkCore": "6.0.0",
           "Microsoft.Extensions.Caching.StackExchangeRedis": "6.0.13",
           "Microsoft.Extensions.Options": "6.0.0",
           "NLog": "5.1.1",
@@ -2390,11 +2391,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\kalbe\\kalbe-wbs\\Kalbe-WBS\\Kalbe-WBS\\WBSBE.DAL\\WBSBE.DAL.csproj",
+      "projectUniqueName": "D:\\kalbe\\wbs-main\\WBSBE.DAL\\WBSBE.DAL.csproj",
       "projectName": "WBSBE.DAL",
-      "projectPath": "D:\\kalbe\\kalbe-wbs\\Kalbe-WBS\\Kalbe-WBS\\WBSBE.DAL\\WBSBE.DAL.csproj",
+      "projectPath": "D:\\kalbe\\wbs-main\\WBSBE.DAL\\WBSBE.DAL.csproj",
       "packagesPath": "C:\\Users\\Switomo Santoso\\.nuget\\packages\\",
-      "outputPath": "D:\\kalbe\\kalbe-wbs\\Kalbe-WBS\\Kalbe-WBS\\WBSBE.DAL\\obj\\",
+      "outputPath": "D:\\kalbe\\wbs-main\\WBSBE.DAL\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\Switomo Santoso\\AppData\\Roaming\\NuGet\\NuGet.Config",
@@ -2411,8 +2412,8 @@
         "net6.0": {
           "targetAlias": "net6.0",
           "projectReferences": {
-            "D:\\kalbe\\kalbe-wbs\\Kalbe-WBS\\Kalbe-WBS\\WBSBE.Common\\WBSBE.Common.csproj": {
-              "projectPath": "D:\\kalbe\\kalbe-wbs\\Kalbe-WBS\\Kalbe-WBS\\WBSBE.Common\\WBSBE.Common.csproj"
+            "D:\\kalbe\\wbs-main\\WBSBE.Common\\WBSBE.Common.csproj": {
+              "projectPath": "D:\\kalbe\\wbs-main\\WBSBE.Common\\WBSBE.Common.csproj"
             }
           }
         }
@@ -2454,7 +2455,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.101\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.102\\RuntimeIdentifierGraph.json"
       }
     }
   }
