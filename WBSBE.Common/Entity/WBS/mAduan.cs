@@ -18,7 +18,6 @@ namespace WBSBE.Common.Entity.WBS
 
         [Key]
         [StringLength(50)]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public string txtNomorID { get; set; }
 
         [StringLength(25)]

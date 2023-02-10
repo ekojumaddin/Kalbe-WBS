@@ -12,15 +12,16 @@ namespace WBSBE.Common.Model
         public int? intPertanyaanID { get; set; }
 
         [StringLength(255)]
-        public string txtPertanyaan { get; set; }
+        public string? txtPertanyaan { get; set; }
 
         public int? intOrderPertanyaan { get; set; }
 
-        public bool bitMandatory { get; set; }
-        public bool? bitActive { get; set; }
+        public bool? bitMandatory { get; set; }
 
         public string? isMandatory { get; set; }
 
         public string? isActive { get; set; }
+
+        public List<TanyaJawabModel>? listPertanyaan { get; set; } = new List<TanyaJawabModel>();
     }
 }

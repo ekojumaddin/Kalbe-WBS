@@ -135,33 +135,32 @@ namespace WBSBE.BussLogic
                 aduan.listTanyaJawab = new();
                 aduan.fileName = new();
 
-                var listJawaban = (from j in context.mJawaban
+                var listTanyaJawab = (from j in context.mJawaban
                                    join p in context.mPertanyaan on j.intPertanyaanID equals p.intPertanyaanID
-                                   where j.bitActive == true && p.bitActive == true && j.txtNomorAduan.txtNomorID == item.txtNomorID &&
-                                   j.intOrderJawaban == p.intOrderPertanyaan
+                                   where j.bitActive == true && p.bitActive == true && j.txtNomorAduan.txtNomorID == item.txtNomorID
                                    orderby p.intOrderPertanyaan
                                    select new
                                    {
                                        jwbId = j.intJawabanID,
                                        ptyId = p.intPertanyaanID,
-                                       orderId = j.intOrderJawaban,
+                                       orderId = p.intOrderPertanyaan,
                                        pertanyaan = p.txtPertanyaan,
                                        jawaban = j.txtJawaban,
                                        mandatory = p.bitMandatory
                                    }).ToList();
 
 
-                if (listJawaban.Count > 0)
+                if (listTanyaJawab.Count > 0)
                 {
-                    foreach (var itemJawaban in listJawaban)
+                    foreach (var itemTJ in listTanyaJawab)
                     {
                         TanyaJawabModel tanyaJawab = new TanyaJawabModel();
-                        tanyaJawab.intJawabanID = itemJawaban.jwbId;
-                        tanyaJawab.intPertanyaanID = itemJawaban.ptyId;
-                        tanyaJawab.intOrderJawaban = itemJawaban.orderId;
-                        tanyaJawab.txtPertanyaan = itemJawaban.pertanyaan;
-                        tanyaJawab.txtJawaban = itemJawaban.jawaban;
-                        if (itemJawaban.mandatory == true)
+                        tanyaJawab.intJawabanID = itemTJ.jwbId;
+                        tanyaJawab.intPertanyaanID = itemTJ.ptyId;
+                        tanyaJawab.intOrderPertanyaan = itemTJ.orderId;
+                        tanyaJawab.txtPertanyaan = itemTJ.pertanyaan;
+                        tanyaJawab.txtJawaban = itemTJ.jawaban;
+                        if (itemTJ.mandatory == true)
                         {
                             tanyaJawab.isMandatory = "Mandatory";
                         }
@@ -243,28 +242,27 @@ namespace WBSBE.BussLogic
                     aduan.txtTlp = item.txtTlp;
                     aduan.txtEmail = item.txtEmail;
 
-                    var listJawaban = (from j in context.mJawaban
+                    var listTanyaJawab = (from j in context.mJawaban
                                        join p in context.mPertanyaan on j.intPertanyaanID equals p.intPertanyaanID
-                                       where j.bitActive == true && p.bitActive == true && j.txtNomorAduan.txtNomorID == item.txtNomorID &&
-                                       j.intOrderJawaban == p.intOrderPertanyaan
+                                       where j.bitActive == true && p.bitActive == true && j.txtNomorAduan.txtNomorID == item.txtNomorID
                                        orderby p.intOrderPertanyaan
                                        select new
                                        {
                                            jwbId = j.intJawabanID,
                                            ptyId = p.intPertanyaanID,
-                                           orderId = j.intOrderJawaban,
+                                           orderId = p.intOrderPertanyaan,
                                            pertanyaan = p.txtPertanyaan,
                                            jawaban = j.txtJawaban,
                                            mandatory = p.bitMandatory
                                        }).ToList();
 
-                    if (listJawaban.Count > 0)
+                    if (listTanyaJawab.Count > 0)
                     {
-                        foreach (var itemJawaban in listJawaban)
+                        foreach (var itemTJ in listTanyaJawab)
                         {
                             TanyaJawabModel tanyaJawab = new TanyaJawabModel();
-                            tanyaJawab.txtPertanyaan = itemJawaban.pertanyaan;
-                            tanyaJawab.txtJawaban = itemJawaban.jawaban;
+                            tanyaJawab.txtPertanyaan = itemTJ.pertanyaan;
+                            tanyaJawab.txtJawaban = itemTJ.jawaban;
 
                             aduan.listTanyaJawab.Add(tanyaJawab);
                         }
@@ -317,6 +315,7 @@ namespace WBSBE.BussLogic
             try
             {
                 mAduan aduan = new mAduan();
+                aduan.txtNomorID = GetNomorAduan(paramData.txtPelapor);
                 aduan.txtTlp = paramData.txtTlp;
                 aduan.txtNIK = paramData.txtNIK;
                 aduan.txtNama = paramData.txtNama;
@@ -330,11 +329,7 @@ namespace WBSBE.BussLogic
                 foreach (var item in paramData.listJawaban)
                 {
                     mJawaban jawaban = new mJawaban();
-                    int j = (int)item.intPertanyaanID;
-                    for (int i = 0; i <= j; i++)
-                    {
-                        jawaban.intOrderJawaban = i;
-                    }
+                    
                     jawaban.txtJawaban = item.txtJawaban;
                     jawaban.bitActive = true;
                     jawaban.dtmInserted = DateTime.UtcNow;
@@ -342,8 +337,7 @@ namespace WBSBE.BussLogic
 
                     if (item.intPertanyaanID.HasValue)
                     {
-                        int idPertanyaan = j;
-                        jawaban.intPertanyaanID = idPertanyaan;
+                        jawaban.intPertanyaanID = (int)item.intPertanyaanID;
                     }
 
                     aduan.listJawaban.Add(jawaban);
@@ -471,11 +465,6 @@ namespace WBSBE.BussLogic
 
                     foreach (var item in paramData.listJawaban)
                     {
-                        int j = (int)item.intPertanyaanID;
-                        for (int i = 0; i <= j; i++)
-                        {
-                            existJawaban.intOrderJawaban = i;
-                        }
                         existJawaban.txtJawaban = item.txtJawaban;
                         existJawaban.bitActive = true;
                         existJawaban.dtmInserted = DateTime.UtcNow;
@@ -483,8 +472,7 @@ namespace WBSBE.BussLogic
 
                         if (item.intPertanyaanID.HasValue)
                         {
-                            int idPertanyaan = j;
-                            existJawaban.intPertanyaanID = idPertanyaan;
+                            existJawaban.intPertanyaanID = (int)item.intPertanyaanID;
                         }
 
                         existAduan.listJawaban.Add(existJawaban);
@@ -655,7 +643,8 @@ namespace WBSBE.BussLogic
                 List<AduanModel> listAduan = new List<AduanModel>();
                 var query = from a in context.mAduan
                              join j in context.mJawaban on a.txtNomorID equals j.txtNomorAduan.txtNomorID
-                             where a.bitActive == true && j.bitActive == true && j.intOrderJawaban == 1
+                             join p in context.mPertanyaan on j.intPertanyaanID equals p.intPertanyaanID
+                             where a.bitActive == true && j.bitActive == true && p.intOrderPertanyaan == 1
                              orderby a.txtNomorID
                              select new
                              {
@@ -702,7 +691,8 @@ namespace WBSBE.BussLogic
 
                 var query = from a in context.mAduan
                             join j in context.mJawaban on a.txtNomorID equals j.txtNomorAduan.txtNomorID
-                            where a.bitActive == true && j.bitActive == true && j.intOrderJawaban == 1
+                            join p in context.mPertanyaan on j.intPertanyaanID equals p.intPertanyaanID
+                            where a.bitActive == true && j.bitActive == true && p.intOrderPertanyaan == 1
                             orderby a.txtNomorID
                             select new
                             {
@@ -754,7 +744,8 @@ namespace WBSBE.BussLogic
 
                 var query = from a in context.mAduan
                             join j in context.mJawaban on a.txtNomorID equals j.txtNomorAduan.txtNomorID
-                            where a.bitActive == true && j.bitActive == true && j.intOrderJawaban == 1
+                            join p in context.mPertanyaan on j.intPertanyaanID equals p.intPertanyaanID
+                            where a.bitActive == true && j.bitActive == true && p.intOrderPertanyaan == 1
                             orderby a.txtNomorID
                             select new
                             {
@@ -841,6 +832,49 @@ namespace WBSBE.BussLogic
                     }
                     return ("application/zip", ms.ToArray(), zipName);
                 }                
+            }
+        }
+
+        public string GetNomorAduan(string type)
+        {
+            using (var context = new WBSDBContext())
+            {
+                var dateNow = DateTime.Now.ToString("yyyyddMM");
+
+                string nomorAduan = "";
+                var lastNoAduan = context.mAduan.Where(a => a.bitActive == true && a.txtNomorID.Contains("_")).OrderBy(x => x.txtNomorID).FirstOrDefault();
+
+                if (lastNoAduan == null)
+                {
+                    if (type == "Anonim")
+                    {
+                        nomorAduan = "A_" + dateNow + "_0001";
+                    }
+                    else
+                    {
+                        nomorAduan = "B_" + dateNow + "_0001";
+                    }
+                }
+                else 
+                {
+                    string getLastNumber = lastNoAduan.txtNomorID.Substring(lastNoAduan.txtNomorID.Length - 4);
+                    
+                    int number = Int32.Parse(getLastNumber);
+                    number++;
+
+                    string nomorUrut = number.ToString("D4");
+
+                    if (type == "Anonim")
+                    {
+                        nomorAduan = "A_" + dateNow + "_" + nomorUrut;
+                    }
+                    else
+                    {
+                        nomorAduan = "B_" + dateNow + "_" + nomorUrut;
+                    }
+                }
+
+                return nomorAduan;
             }
         }
     }
