@@ -67,7 +67,6 @@ namespace WBSBE.Controllers
             {
                 return BadRequest(ex.Message);
             }
-
         }
         #endregion
 
@@ -176,7 +175,7 @@ namespace WBSBE.Controllers
         }
         #endregion
 
-        #region View Aduan
+        #region Update Aduan
         [HttpPost]
         [Route("UpdateAduan")]
         public IActionResult updateData([FromForm] AduanModel aduan)
@@ -226,6 +225,25 @@ namespace WBSBE.Controllers
             return Ok(apiDat);
         }
         #endregion
+
+        #region Approved Aduan
+        [HttpPost]
+        [Route("Approve")]
+        public IActionResult approve(string nomor)
+        {
+            try
+            {
+                ResponseType type = ResponseType.Success;
+                string message = clsAduan.Approve(nomor);
+                return Ok(ResponseHandler.GetAppResponse(type, null, message));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ResponseHandler.GetExceptionResponse(ex));
+            }
+        }
+        #endregion
+
 
         [HttpPost]
         [Route("SortAduan")]
