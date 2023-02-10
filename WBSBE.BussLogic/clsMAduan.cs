@@ -877,5 +877,21 @@ namespace WBSBE.BussLogic
                 return nomorAduan;
             }
         }
+
+        public string Approve(string nomorAduan)
+        {
+            using (var context = new WBSDBContext())
+            {
+                var existAduan = context.mAduan.Where(a => a.txtNomorID == nomorAduan && a.bitActive == true).FirstOrDefault();
+
+                existAduan.txtStatus = "Approved";
+                existAduan.dtmUpdated = DateTime.UtcNow;
+                existAduan.txtUpdatedBy = "Manual"; //will be change to user login
+                context.Update(existAduan);
+                context.SaveChanges();
+
+                return ResponseHandler.SendResponse("Nomor Aduan "+ nomorAduan + " telah Approved");
+            }
+        }
     }
 }
