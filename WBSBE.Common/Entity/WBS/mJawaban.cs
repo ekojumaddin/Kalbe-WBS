@@ -17,8 +17,6 @@ namespace WBSBE.Common.Entity.WBS
         [StringLength(255)]
         public string txtJawaban { get; set; }
 
-        public int? intOrderJawaban { get; set; }
-
         [StringLength(50)]
         public string? txtInsertedBy { get; set; }
         public DateTime? dtmInserted { get; set; }

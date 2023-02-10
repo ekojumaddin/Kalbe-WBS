@@ -175,28 +175,55 @@ namespace WBSBE.BussLogic
 
         public string Insert(PertanyaanModel paramData, WBSDBContext context)
         {
-            var checkExistOrder = context.mPertanyaan.Where(p => p.intOrderPertanyaan == paramData.intOrderPertanyaan && p.bitActive == true).FirstOrDefault();
-            if (checkExistOrder != null)
+            foreach (var item in paramData.listPertanyaan)
             {
-                return ResponseHandler.SendResponse("Nomor urutan pertanyaan sudah tersedia");
+                if (item.intPertanyaanID > 0)
+                {
+                    var existPertanyaan = context.mPertanyaan.Where(p => p.intPertanyaanID == item.intPertanyaanID && p.bitActive == true).FirstOrDefault();
+                    existPertanyaan.txtPertanyaan = item.txtPertanyaan;
+                    existPertanyaan.intOrderPertanyaan = item.intOrderPertanyaan;
+                    if (item.isActive == "Active")
+                    {
+                        existPertanyaan.bitActive = true;
+                    }
+                    else
+                    {
+                        existPertanyaan.bitActive = false;
+                    }
+
+                    if (item.bitMandatory.HasValue)
+                    {
+                        existPertanyaan.bitMandatory = (bool)item.bitMandatory;
+                    }
+                    existPertanyaan.dtmUpdated = DateTime.UtcNow;
+                    existPertanyaan.txtUpdatedBy = "Manual"; //will be change to user login
+
+                    context.Update(existPertanyaan);
+                    context.SaveChanges();
+                }
+                else
+                {
+                    var checkExistNama = context.mPertanyaan.Where(p => p.txtPertanyaan == item.txtPertanyaan && p.bitActive == true).FirstOrDefault();
+                    if (checkExistNama != null)
+                    {
+                        return ResponseHandler.SendResponse("Nama pertanyaan sudah tersedia");
+                    }
+
+                    mPertanyaan pertanyaan = new mPertanyaan();
+                    pertanyaan.txtPertanyaan = item.txtPertanyaan;
+                    pertanyaan.bitActive = true;
+                    if (item.bitMandatory.HasValue)
+                    {
+                        pertanyaan.bitMandatory = (bool)item.bitMandatory;
+                    }
+                    pertanyaan.intOrderPertanyaan = item.intOrderPertanyaan;
+                    pertanyaan.dtmInserted = DateTime.UtcNow;
+                    pertanyaan.txtInsertedBy = "Manual";
+
+                    context.Add(pertanyaan);
+                    context.SaveChanges();
+                }
             }
-
-            var checkExistNama = context.mPertanyaan.Where(p => p.txtPertanyaan == paramData.txtPertanyaan && p.bitActive == true).FirstOrDefault();
-            if (checkExistNama != null)
-            {
-                return ResponseHandler.SendResponse("Nama pertanyaan sudah tersedia");
-            }
-
-            mPertanyaan pertanyaan = new mPertanyaan();
-            pertanyaan.txtPertanyaan = paramData.txtPertanyaan;
-            pertanyaan.intOrderPertanyaan = paramData.intOrderPertanyaan;
-            pertanyaan.bitMandatory = paramData.bitMandatory;
-            pertanyaan.bitActive = true;
-            pertanyaan.dtmInserted = DateTime.UtcNow;
-            pertanyaan.txtInsertedBy = "Manual";
-
-            context.mPertanyaan.Add(pertanyaan);
-            context.SaveChanges();
 
             return ResponseHandler.SendResponse("Data berhasil di simpan");
         }
@@ -226,7 +253,10 @@ namespace WBSBE.BussLogic
                     var existPertanyaan = context.mPertanyaan.Where(p => p.intPertanyaanID == paramData.intPertanyaanID && p.bitActive == true).FirstOrDefault();
                     existPertanyaan.txtPertanyaan = paramData.txtPertanyaan;
                     existPertanyaan.intOrderPertanyaan = paramData.intOrderPertanyaan;
-                    existPertanyaan.bitMandatory = paramData.bitMandatory;
+                    if (paramData.bitMandatory.HasValue)
+                    {
+                        existPertanyaan.bitMandatory = (bool)paramData.bitMandatory;
+                    }
                     existPertanyaan.dtmUpdated = DateTime.UtcNow;
                     existPertanyaan.txtUpdatedBy = "Manual"; //will be change to user login
 
