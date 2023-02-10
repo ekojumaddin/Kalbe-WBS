@@ -225,6 +225,19 @@ namespace WBSBE.BussLogic
                 }
             }
 
+            var listPertanyaan = context.mPertanyaan.Where(p => p.bitActive == true).Select(p => p.intPertanyaanID).ToList();
+            foreach (var item in listPertanyaan)
+            {
+                if (!paramData.listPertanyaan.Exists(x => x.intPertanyaanID == item))
+                {
+                    var nonActivePertanyaan = context.mPertanyaan.Where(p => p.intPertanyaanID == item && p.bitActive == true).FirstOrDefault();
+                    nonActivePertanyaan.bitActive = false;
+
+                    context.Update(nonActivePertanyaan);
+                    context.SaveChanges();
+                }
+            }
+
             return ResponseHandler.SendResponse("Data berhasil di simpan");
         }
 
