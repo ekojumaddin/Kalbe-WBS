@@ -16,6 +16,7 @@ namespace WBSBE.BussLogic
         #region Property 
         LoggerManager logger = new LoggerManager();
         #endregion
+
         public string Delete(string paramTxtId)
         {
             throw new NotImplementedException();

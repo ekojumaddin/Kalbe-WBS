@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using KN2021_GlobalClient_NetCore;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -91,6 +92,26 @@ namespace WBSBE.Common.Library
             smtp.Send(mail);
 
             return true;
+        }
+
+        public static bool SendEmailViaKNGlobal(cstmMailModel paramModel)
+        {
+            //trDebugEmail dat = trDebugEmail.CreateBlankClstrDebugEmail();
+            //dat.txtBody = paramModel.txtBody;
+            //dat.txtFrom = paramModel.txtFrom;
+            //dat.txtSubject = paramModel.txtSubject;
+            //dat.txtTo = paramModel.txtTo;
+            clsGlobalAPI apiDat = clsWSO2Helper.CallAPI(ClsGlobalClass.dLogin.txtUserName, ClsGlobalConstant.DefaultLangID,
+                                                         clsConstantClient.WSO_API.SendEmail, paramModel, ClsGlobalConstant.txtProgramCode, null);
+
+            if (apiDat.bitSuccess)
+            {
+                return true;
+            }
+            else
+            {
+                throw new Exception(apiDat.txtErrorMessage);
+            }
         }
     }
 }
