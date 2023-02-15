@@ -48,18 +48,6 @@ namespace WBSBE.Controllers
                 string message = "Data Master Pertanyaan tidak boleh kosong";
                 return BadRequest(ResponseHandler.GetAppResponse(type, null, message));
             }
-            else if (pertanyaan.txtPertanyaan == null)
-            {
-                ResponseType type = ResponseType.Failure;
-                string message = "Nama Pertanyaan tidak boleh kosong";
-                return BadRequest(ResponseHandler.GetAppResponse(type, null, message));
-            }
-            else if (pertanyaan.intOrderPertanyaan == null)
-            {
-                ResponseType type = ResponseType.Failure;
-                string message = "Nomor urut Pertanyaan tidak boleh kosong";
-                return BadRequest(ResponseHandler.GetAppResponse(type, null, message));
-            }
             else
             {
                 try

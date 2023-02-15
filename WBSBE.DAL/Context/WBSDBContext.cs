@@ -31,6 +31,10 @@ namespace WBSBE.DAL.Context
         public virtual DbSet<mPertanyaan> mPertanyaan { get; set; }
         public virtual DbSet<mJawaban> mJawaban { get; set; }
 
+        public virtual DbSet<Common.Entity.WBS.mUser> mUser { get; set; }
+        public virtual DbSet<Common.Entity.WBS.mRole> mRole { get; set; }
+        public virtual DbSet<mSetInvestigation> mSetInvestigation { get; set; }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             if (!optionsBuilder.IsConfigured)

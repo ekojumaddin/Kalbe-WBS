@@ -787,27 +787,6 @@ namespace WBSBE.BussLogic
             }
         }
 
-        public static bool SendEmailViaKNGlobal(cstmMailModel paramModel)
-        {
-            //trDebugEmail dat = trDebugEmail.CreateBlankClstrDebugEmail();
-            //dat.txtBody = paramModel.txtBody;
-            //dat.txtFrom = paramModel.txtFrom;
-            //dat.txtSubject = paramModel.txtSubject;
-            //dat.txtTo = paramModel.txtTo;
-
-            clsGlobalAPI apiDat = clsWSO2Helper.CallAPI(ClsGlobalClass.dLogin.txtUserName, ClsGlobalConstant.DefaultLangID,
-                                                         clsConstantClient.WSO_API.SendEmail, paramModel, ClsGlobalConstant.txtProgramCode, null);
-
-            if (apiDat.bitSuccess)
-            {
-                return true;
-            }
-            else
-            {
-                throw new Exception(apiDat.txtErrorMessage);
-            }
-        }
-
         public (string fileType, byte[] archiveData, string archiveName) DownloadFiles(string nomor)
         {
             var zipName = $"Lampiran-{ nomor + "#" + DateTime.Now.ToString("yyyy_MM_dd-HH_mm_ss")}.zip";
@@ -842,7 +821,7 @@ namespace WBSBE.BussLogic
                 var dateNow = DateTime.Now.ToString("yyyyddMM");
 
                 string nomorAduan = "";
-                var lastNoAduan = context.mAduan.Where(a => a.bitActive == true && a.txtNomorID.Contains("_")).OrderBy(x => x.txtNomorID).FirstOrDefault();
+                var lastNoAduan = context.mAduan.Where(a => a.bitActive == true && a.txtNomorID.Contains("_")).OrderByDescending(x => x.txtNomorID).FirstOrDefault();
 
                 if (lastNoAduan == null)
                 {
