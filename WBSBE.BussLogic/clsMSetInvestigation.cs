@@ -322,11 +322,11 @@ namespace WBSBE.BussLogic
             List<string> listUserName = new List<string>();
             List<string> listRoleName = new List<string>();
             List<mSetInvestigation> listIdInvestigation = new List<mSetInvestigation>();
-            string rn = "";
-            string un = "";
 
             try
             {
+                var checkNomor = context.mSetInvestigation.Where(a => a.txtNomorID == paramData.txtNomorID && a.bitActive == true && a.bitSentMail == false).ToList();
+
                 foreach (var item in paramData.listTeamInvestigation)
                 {
                     var email = context.mUser.Where(u => u.intUserID == item.intUserID).Select(u => u.txtEmail).FirstOrDefault();
@@ -347,37 +347,74 @@ namespace WBSBE.BussLogic
                         listRoleName.Add(rolename);
                     }
 
-                    mSetInvestigation team = new mSetInvestigation();
-                    if (item.intUserID.HasValue && item.intRoleID.HasValue)
+                    if (checkNomor == null)
                     {
-                        team.intUserID = (int)item.intUserID;
-                        team.intRoleID = (int)item.intRoleID;
+                        mSetInvestigation team = new mSetInvestigation();
+                        if (item.intUserID.HasValue && item.intRoleID.HasValue)
+                        {
+                            team.intUserID = (int)item.intUserID;
+                            team.intRoleID = (int)item.intRoleID;
+                        }
+                        else
+                        {
+                            ResponseHandler.SendResponse("Nama Team dan Role wajib diisi");
+                        }
+
+                        team.txtNomorID = paramData.txtNomorID;
+                        team.bitActive = true;
+                        team.bitSubmit = true;
+                        team.bitSentMail = false;
+                        team.dtInserted = DateTime.UtcNow;
+                        team.txtInsertedBy = "Manual";
+
+                        context.mSetInvestigation.Add(team);
+                        context.SaveChanges();
+
+                        listIdInvestigation.Add(team);
+
+                        #region sendingEmail  
+                        SendEmail(context, paramData, listIdInvestigation, listEmail, listUserName, listRoleName);
+                        #endregion
                     }
-                    else
-                    {
-                        ResponseHandler.SendResponse("Nama Team dan Role wajib diisi");
-                    }
-
-                    team.txtNomorID = paramData.txtNomorID;
-                    team.bitActive = true;
-                    team.bitSubmit = true;
-                    team.bitSentMail = false;
-                    team.dtInserted = DateTime.UtcNow;
-                    team.txtInsertedBy = "Manual";
-
-                    context.mSetInvestigation.Add(team);
-                    context.SaveChanges();
-
-                    listIdInvestigation.Add(team);
                 }
+
+                if (checkNomor != null)
+                {
+                    foreach (var no in checkNomor)
+                    {
+                        no.bitSubmit = true;
+                        listIdInvestigation.Add(no);
+
+                        #region sendingEmail  
+                        SendEmail(context, paramData, listIdInvestigation, listEmail, listUserName, listRoleName);
+                        #endregion
+                    }
+                }                                
             }
             catch (Exception ex)
             {
                 logger.LogError(ex.StackTrace.ToString());
-            }
+            }            
 
+            return ResponseHandler.SendResponse("Data berhasil di submit");
+        }
 
-            #region sendingEmail  
+        public string Update(SetTeamInvestigationModel paramData)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string Update(SetTeamInvestigationModel paramData, WBSDBContext context)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string SendEmail(WBSDBContext context, SetTeamInvestigationModel paramData, List<mSetInvestigation> listIdInvestigation, 
+            List<string> listEmail, List<string> listUserName, List<string> listRoleName)
+        {
+            string rn = "";
+            string un = "";
+
             string subjectMailInvestigation = context.mConfig.Where(c => c.txtType == "SetTeamInvestigation" && c.txtName == "MailSubject" && c.bitActive == true)
                                             .Select(c => c.txtValue).FirstOrDefault();
             string fromMailInvestigation = context.mConfig.Where(c => c.txtType == "SetTeamInvestigation" && c.txtName == "MailFrom" && c.bitActive == true)
@@ -415,7 +452,7 @@ namespace WBSBE.BussLogic
 
             try
             {
-                clsCommonFunction.SendEmailViaKNGlobal(mailModel);
+                //clsCommonFunction.SendEmailViaKNGlobal(mailModel);
 
                 foreach (var item in listIdInvestigation)
                 {
@@ -428,19 +465,8 @@ namespace WBSBE.BussLogic
             {
                 return ResponseHandler.SendResponse(ex.Message);
             }
-            #endregion
 
-            return ResponseHandler.SendResponse("Data berhasil di simpan");
-        }
-
-        public string Update(SetTeamInvestigationModel paramData)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string Update(SetTeamInvestigationModel paramData, WBSDBContext context)
-        {
-            throw new NotImplementedException();
+            return ResponseHandler.SendResponse("Data berhasil di submit");
         }
     }
 }
