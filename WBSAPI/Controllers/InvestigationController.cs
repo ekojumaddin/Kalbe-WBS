@@ -20,6 +20,7 @@ namespace WBSBE.Controllers
         }
         #endregion
 
+        #region GetAllUser
         [HttpPost]
         [Route("GetAllUser")]
         public IActionResult getAllUser(clsGlobalAPI apiDat)
@@ -37,7 +38,9 @@ namespace WBSBE.Controllers
                 return BadRequest(ResponseHandler.GetExceptionResponse(ex));
             }
         }
+        #endregion
 
+        #region GetAllRole
         [HttpPost]
         [Route("GetAllRole")]
         public IActionResult getAllRole(clsGlobalAPI apiDat)
@@ -55,7 +58,9 @@ namespace WBSBE.Controllers
                 return BadRequest(ResponseHandler.GetExceptionResponse(ex));
             }
         }
+        #endregion
 
+        #region SaveTeamInvestigation
         [HttpPost]
         [Route("SaveTeamInvestigation")]
         public IActionResult saveData([FromForm] SetTeamInvestigationModel investigation)
@@ -80,7 +85,9 @@ namespace WBSBE.Controllers
                 }
             }
         }
+        #endregion
 
+        #region SubmitTeamInvestigation
         [HttpPost]
         [Route("SubmitTeamInvestigation")]
         public IActionResult submitData([FromForm] SetTeamInvestigationModel investigation)
@@ -105,5 +112,31 @@ namespace WBSBE.Controllers
                 }
             }
         }
+        #endregion
+
+        #region GetAllAduanByUserId
+        [HttpPost]
+        [Route("GetAllAduanByUserId")]
+        public IActionResult GetAllAduanByUserId(clsGlobalAPI apiDat)
+        {
+            try
+            {
+                JObject param = JObject.Parse(apiDat.objRequestData.ToString());
+                var dtParam = JsonConvert.DeserializeObject<SetTeamInvestigationModel>(param.ToString());
+
+                if (dtParam.intUserID.HasValue)
+                {
+                    var objData = clsInvestigation.GetAllAduanById((int)dtParam.intUserID);
+                    apiDat = clsGlobalAPI.CreateResult(apiDat, true, objData, string.Empty, string.Empty);                    
+                }
+
+                return Ok(apiDat);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ResponseHandler.GetExceptionResponse(ex));
+            }
+        }
+        #endregion
     }
 }

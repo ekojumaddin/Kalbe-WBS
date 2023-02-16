@@ -182,6 +182,79 @@ namespace WBSBE.BussLogic
             throw new NotImplementedException();
         }
 
+        public SetTeamInvestigationModel GetAllAduanById(int paramId)
+        {
+            using (var context = new WBSDBContext())
+            {
+                var nomor = context.mSetInvestigation.Where(a => a.intUserID == paramId && a.bitActive == true).Select(a => a.txtNomorID).ToList();
+
+                SetTeamInvestigationModel investigationModel = new SetTeamInvestigationModel();
+                investigationModel.listAduan = new();
+
+                if (nomor != null)
+                {
+                    foreach (var item in nomor)
+                    {
+                        AduanModel aduan = new AduanModel();
+                        aduan.listTanyaJawab = new();
+                        aduan.fileName = new();
+
+                        var getNomor = context.mAduan.Where(a => a.txtNomorID == item && a.bitActive == true).FirstOrDefault();                     
+
+                        aduan.txtNomorID = getNomor.txtNomorID;
+                        aduan.txtStatus = getNomor.txtStatus;
+                        aduan.txtPelapor = getNomor.txtPelapor;
+                        aduan.txtNIK = getNomor.txtNIK;
+                        aduan.txtNama = getNomor.txtNama;
+                        aduan.txtTlp = getNomor.txtTlp;
+                        aduan.txtEmail = getNomor.txtEmail;
+
+                        investigationModel.listAduan.Add(aduan);
+
+                        var listTanyaJawab = (from j in context.mJawaban
+                                              join p in context.mPertanyaan on j.intPertanyaanID equals p.intPertanyaanID
+                                              where j.bitActive == true && p.bitActive == true && j.txtNomorAduan.txtNomorID == item
+                                              orderby p.intOrderPertanyaan
+                                              select new
+                                              {
+                                                  jwbId = j.intJawabanID,
+                                                  ptyId = p.intPertanyaanID,
+                                                  orderId = p.intOrderPertanyaan,
+                                                  pertanyaan = p.txtPertanyaan,
+                                                  jawaban = j.txtJawaban,
+                                                  mandatory = p.bitMandatory
+                                              }).ToList();
+
+                        if (listTanyaJawab.Count > 0)
+                        {
+                            foreach (var itemTJ in listTanyaJawab)
+                            {
+                                TanyaJawabModel tanyaJawab = new TanyaJawabModel();
+                                tanyaJawab.txtPertanyaan = itemTJ.pertanyaan;
+                                tanyaJawab.txtJawaban = itemTJ.jawaban;
+
+                                aduan.listTanyaJawab.Add(tanyaJawab);
+                            }
+                        }
+
+                        var listLampiran = context.mAttachment.Where(c => c.mAduan.txtNomorID == item && c.bitActive == true).ToList();
+
+                        if (listLampiran.Count > 0)
+                        {
+                            foreach (var lampiran in listLampiran)
+                            {
+                                var oriFileName = lampiran.txtFileName;
+
+                                aduan.fileName.Add(oriFileName);
+                            }
+                        }
+                    }
+                }
+
+                return investigationModel;
+            }
+        }
+
         public string Insert(SetTeamInvestigationModel paramData)
         {
             try
