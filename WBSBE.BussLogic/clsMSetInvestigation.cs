@@ -384,12 +384,21 @@ namespace WBSBE.BussLogic
                     {
                         no.bitSubmit = true;
                         listIdInvestigation.Add(no);
+                        context.SaveChanges();
 
                         #region sendingEmail  
                         SendEmail(context, paramData, listIdInvestigation, listEmail, listUserName, listRoleName);
                         #endregion
                     }
-                }                                
+                }
+
+                var checkStatus = context.mAduan.Where(m => m.txtNomorID == paramData.txtNomorID && m.bitActive == true).FirstOrDefault();
+                if (checkStatus != null) 
+                {
+                    checkStatus.txtStatus = "Laporan Investigasi diproses";
+                    context.Update(checkStatus);
+                    context.SaveChanges();
+                }
             }
             catch (Exception ex)
             {
