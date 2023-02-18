@@ -20,7 +20,7 @@ namespace WBSBE.Common.Entity.WBS
         [StringLength(50)]
         public string txtNomorID { get; set; }
 
-        [StringLength(25)]
+        [StringLength(50)]
         public string txtStatus { get; set; }
 
         [StringLength(50)]

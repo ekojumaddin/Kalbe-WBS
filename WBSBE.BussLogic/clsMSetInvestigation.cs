@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -321,91 +322,121 @@ namespace WBSBE.BussLogic
             List<string> listEmail = new List<string>();
             List<string> listUserName = new List<string>();
             List<string> listRoleName = new List<string>();
-            List<mSetInvestigation> listIdInvestigation = new List<mSetInvestigation>();
+            List<int> listUserId = new List<int>();
+            List<int> listRoleId = new List<int>();
 
-            try
+            using (var transaction = context.Database.BeginTransaction())
             {
-                var checkNomor = context.mSetInvestigation.Where(a => a.txtNomorID == paramData.txtNomorID && a.bitActive == true && a.bitSentMail == false).ToList();
-
-                foreach (var item in paramData.listTeamInvestigation)
+                try
                 {
-                    var email = context.mUser.Where(u => u.intUserID == item.intUserID).Select(u => u.txtEmail).FirstOrDefault();
-                    if (email != null)
-                    {
-                        listEmail.Add(email);
-                    }
+                    var existingInvestigations = context.mSetInvestigation.Where(a => a.txtNomorID == paramData.txtNomorID && a.bitActive == true && a.bitSentMail == false).ToList();
 
-                    var username = context.mUser.Where(u => u.intUserID == item.intUserID).Select(u => u.txtUserName).FirstOrDefault();
-                    if (username != null)
+                    foreach (var item in paramData.listTeamInvestigation)
                     {
-                        listUserName.Add(username);
-                    }
+                        listUserId.Add((int)item.intUserID);
+                        listRoleId.Add((int)item.intRoleID);
 
-                    var rolename = context.mRole.Where(u => u.intRoleID == item.intRoleID).Select(u => u.txtRoleName).FirstOrDefault();
-                    if (rolename != null)
-                    {
-                        listRoleName.Add(rolename);
-                    }
+                        var user = context.mUser.Find(item.intUserID);
+                        var role = context.mRole.Find(item.intRoleID);
 
-                    if (checkNomor == null)
-                    {
-                        mSetInvestigation team = new mSetInvestigation();
-                        if (item.intUserID.HasValue && item.intRoleID.HasValue)
+                        var email = user.txtEmail;
+                        if (email != null)
                         {
-                            team.intUserID = (int)item.intUserID;
-                            team.intRoleID = (int)item.intRoleID;
+                            listEmail.Add(email);
+                        }
+
+                        var username = user.txtUserName;
+                        if (username != null)
+                        {
+                            listUserName.Add(username);
+                        }
+
+                        var rolename = role.txtRoleName;
+                        if (rolename != null)
+                        {
+                            listRoleName.Add(rolename);
+                        }
+
+                        if (user == null || role == null)
+                        {
+                            return ResponseHandler.SendResponse("Nama Team dan Role wajib diisi");
+                        }
+
+                        var existingTeam = existingInvestigations
+                            .FirstOrDefault(i => i.intUserID == item.intUserID && i.intRoleID == item.intRoleID);
+
+                        if (existingTeam == null)
+                        {
+                            //Add member/team yg belum ada sebelumnya
+                            mSetInvestigation newTeam = new mSetInvestigation();
+                            newTeam.txtNomorID = paramData.txtNomorID;
+                            newTeam.intUserID = item.intUserID.Value;
+                            newTeam.intRoleID = item.intRoleID.Value;
+                            newTeam.bitActive = true;
+                            newTeam.bitSubmit = true;
+                            newTeam.bitSentMail = false;
+                            newTeam.dtInserted = DateTime.UtcNow;
+                            newTeam.txtInsertedBy = "Manual";
+                           
+
+                            #region sendingEmail  
+                            //SendEmail(context, paramData, listEmail, listUserName, listRoleName);
+                            #endregion
+
+                            newTeam.bitSentMail = true;
+
+                            context.mSetInvestigation.Add(newTeam);
                         }
                         else
                         {
-                            ResponseHandler.SendResponse("Nama Team dan Role wajib diisi");
+                            //update status submit untuk tim yang sudah di save sebelumnya
+                            existingTeam.bitSubmit = true;
+                            existingTeam.dtUpdated = DateTime.UtcNow;
+                            existingTeam.txtUpdatedBy = "Manual";
+
+                            #region sendingEmail  
+                            //SendEmail(context, paramData, listEmail, listUserName, listRoleName);
+                            #endregion
+
+                            existingTeam.bitSentMail = true;
+
+                            context.mSetInvestigation.Update(existingTeam);
                         }
-
-                        team.txtNomorID = paramData.txtNomorID;
-                        team.bitActive = true;
-                        team.bitSubmit = true;
-                        team.bitSentMail = false;
-                        team.dtInserted = DateTime.UtcNow;
-                        team.txtInsertedBy = "Manual";
-
-                        context.mSetInvestigation.Add(team);
-                        context.SaveChanges();
-
-                        listIdInvestigation.Add(team);
-
-                        #region sendingEmail  
-                        SendEmail(context, paramData, listIdInvestigation, listEmail, listUserName, listRoleName);
-                        #endregion
                     }
-                }
 
-                if (checkNomor != null)
-                {
-                    foreach (var no in checkNomor)
+                    foreach (var item in existingInvestigations)
                     {
-                        no.bitSubmit = true;
-                        listIdInvestigation.Add(no);
-                        context.SaveChanges();
-
-                        #region sendingEmail  
-                        SendEmail(context, paramData, listIdInvestigation, listEmail, listUserName, listRoleName);
-                        #endregion
+                        if (!(listUserId.Any(p => p == item.intUserID) && listRoleId.Any(p => p == item.intUserID)))
+                        {
+                            //nonactive member investigation
+                            item.bitActive = false;
+                            item.dtUpdated = DateTime.UtcNow;
+                            item.txtUpdatedBy = "Manual";
+                            context.Update(item);
+                        }
                     }
-                }
 
-                var checkStatus = context.mAduan.Where(m => m.txtNomorID == paramData.txtNomorID && m.bitActive == true).FirstOrDefault();
-                if (checkStatus != null) 
-                {
-                    checkStatus.txtStatus = "Laporan Investigasi diproses";
-                    context.Update(checkStatus);
+                    var existingAduan = context.mAduan.Where(m => m.txtNomorID == paramData.txtNomorID && m.bitActive == true).FirstOrDefault();
+                    if (existingAduan != null)
+                    {
+                        //update status aduan
+                        existingAduan.txtStatus = "Laporan Investigasi diproses";
+                        existingAduan.dtmUpdated = DateTime.UtcNow;
+                        existingAduan.txtUpdatedBy = "Manual"; //will be change to user login
+                        context.Update(existingAduan);                        
+                    }
+
                     context.SaveChanges();
+                    transaction.Commit();
                 }
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex.StackTrace.ToString());
-            }            
+                catch (Exception ex)
+                {
+                    logger.LogError(ex.StackTrace.ToString());
+                    return ResponseHandler.SendResponse(ex.Message);
+                }
 
-            return ResponseHandler.SendResponse("Data berhasil di submit");
+                return ResponseHandler.SendResponse("Data berhasil di submit");
+            }
         }
 
         public string Update(SetTeamInvestigationModel paramData)
@@ -418,8 +449,7 @@ namespace WBSBE.BussLogic
             throw new NotImplementedException();
         }
 
-        public string SendEmail(WBSDBContext context, SetTeamInvestigationModel paramData, List<mSetInvestigation> listIdInvestigation, 
-            List<string> listEmail, List<string> listUserName, List<string> listRoleName)
+        public string SendEmail(WBSDBContext context, SetTeamInvestigationModel paramData, List<string> listEmail, List<string> listUserName, List<string> listRoleName)
         {
             string rn = "";
             string un = "";
@@ -461,14 +491,14 @@ namespace WBSBE.BussLogic
 
             try
             {
-                //clsCommonFunction.SendEmailViaKNGlobal(mailModel);
+                clsCommonFunction.SendEmailViaKNGlobal(mailModel);
 
-                foreach (var item in listIdInvestigation)
-                {
-                    item.bitSentMail = true;
-                    context.Update(item);
-                    context.SaveChanges();
-                }
+                //foreach (var item in listIdInvestigation)
+                //{
+                //    item.bitSentMail = true;
+                //    context.Update(item);
+                //    context.SaveChanges();
+                //}
             }
             catch (Exception ex)
             {
