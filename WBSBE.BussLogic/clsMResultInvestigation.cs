@@ -51,7 +51,54 @@ namespace WBSBE.BussLogic
 
         public ResultInvestigationModel GetDataById(int paramId, WBSDBContext context)
         {
-            throw new NotImplementedException();
+            ResultInvestigationModel result = new ResultInvestigationModel();
+            result.listDocument = new();
+
+            var existsNomor = context.mResultInvestigation.Where(n => n.intResultInvestigationID == paramId && n.bitActive == true).FirstOrDefault();
+
+            if (existsNomor != null)
+            {
+
+                result.txtNomorID = existsNomor.txtNomorID;
+                result.ExecutiveSummary = existsNomor.txtNote;
+                if (existsNomor.bitSubmit == true)
+                {
+                    result.statusLaporan = "Submit";
+                }
+                else
+                {
+                    result.statusLaporan = "Saved";
+                }
+
+                var existsAttachment = context.mAttachmentResult.Where(a => a.mResultInvestigation.intResultInvestigationID == existsNomor.intResultInvestigationID).ToList();
+
+                if (existsAttachment.Count > 0)
+                {
+                    foreach (var item in existsAttachment)
+                    {
+                        AttachmentResultModel attachResult = new AttachmentResultModel();
+                        attachResult.FileDescription = item.txtFileDescription;
+                        attachResult.FileName = item.txtFileName;
+                        attachResult.txtInsertedBy = item.txtInsertedBy;                        
+
+                        if (item.dtmInserted.HasValue)
+                        {
+                            DateTime createdTime = (DateTime)item.dtmInserted;
+                            DateTime dateOnly = createdTime.Date;
+                            string dtInserted = dateOnly.ToString("dd-MM-yyyy", CultureInfo.InvariantCulture);
+                            attachResult.dtmInserted = dtInserted;
+                        }
+
+                        result.listDocument.Add(attachResult);
+                    }
+                }
+            }
+            else
+            {
+                result.message = "Data Hasil Investigasi tidak ditemukan";
+            }
+
+            return result;
         }
 
         public ResultInvestigationModel GetDataById(string paramTxtId)
@@ -97,7 +144,7 @@ namespace WBSBE.BussLogic
                     if (String.IsNullOrEmpty(message))
                     {
                         InsertAttachment(attachment, file.listAttachment);
-                        attachment.txtFileDescription = file.fileDescription;
+                        attachment.txtFileDescription = file.FileDescription;
                         attachment.bitActive = true;
                         attachment.txtFileName = file.listAttachment.FileName;
                         attachment.dtmInserted = DateTime.UtcNow;
@@ -277,7 +324,7 @@ namespace WBSBE.BussLogic
                             if (String.IsNullOrEmpty(message))
                             {
                                 InsertAttachment(attachment, file.listAttachment);
-                                attachment.txtFileDescription = file.fileDescription;
+                                attachment.txtFileDescription = file.FileDescription;
                                 attachment.bitActive = true;
                                 attachment.txtFileName = file.listAttachment.FileName;
                                 attachment.dtmInserted = DateTime.UtcNow;
