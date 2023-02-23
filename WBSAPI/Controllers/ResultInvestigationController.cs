@@ -1,6 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using KN2021_GlobalClient_NetCore;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 using WBSBE.BussLogic;
 using WBSBE.Common.Model;
+using WBSBE.DAL.Context;
+using WBSBE.Common.Entity.WBS;
 
 namespace WBSBE.Controllers
 {
@@ -66,6 +71,50 @@ namespace WBSBE.Controllers
                 {
                     return BadRequest(ResponseHandler.GetExceptionResponse(ex));
                 }
+            }
+        }
+        #endregion
+
+        #region 
+        [HttpPost]
+        [Route("GetHasilInvestigasi")]
+        public IActionResult getResultInvestigation(clsGlobalAPI apiDat)
+        {
+            try
+            {
+                JObject param = JObject.Parse(apiDat.objRequestData.ToString());
+                var dtParam = JsonConvert.DeserializeObject<mResultInvestigation>(param.ToString());
+
+                WBSDBContext context = new WBSDBContext();
+                var objData = clsInvestigation.GetDataById(dtParam.intResultInvestigationID, context);
+
+                if (objData.message != null)
+                {
+                    ResponseType type = ResponseType.NotFound;
+                    apiDat.txtMessage = objData.message;
+                    return Ok(apiDat);
+                }
+
+                apiDat = clsGlobalAPI.CreateResult(apiDat, true, objData, string.Empty, string.Empty);
+                return Ok(apiDat);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ResponseHandler.GetExceptionResponse(ex));
+            }
+        }
+        #endregion
+
+        #region DownloadAttachment
+        [HttpPost]
+        [Route("GetAttachmentById")]
+        public FileResult DownloadFile(int id)
+        {
+            using (var context = new WBSDBContext())
+            {
+                var file = context.mAttachmentResult.Where(a => a.intAttachmentID == id && a.bitActive == true).FirstOrDefault();
+                byte[] bytes = System.IO.File.ReadAllBytes(file.txtFilePath);
+                return File(bytes, "application/octet-stream", file.txtFileName);
             }
         }
         #endregion

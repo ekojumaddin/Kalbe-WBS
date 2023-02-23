@@ -9,8 +9,10 @@ namespace WBSBE.Common.Model
 {
     public class AttachmentResultModel
     {
-        public string? nomor { get; set; }
-        public string? fileDescription { get; set; }
+        public string? FileName { get; set; }
+        public string? FileDescription { get; set; }
+        public string dtmInserted { get; set; }
+        public string? txtInsertedBy { get; set; }
         public IFormFile listAttachment { get; set; }
     }
 }
