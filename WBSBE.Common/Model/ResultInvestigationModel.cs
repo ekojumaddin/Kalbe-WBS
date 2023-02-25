@@ -20,8 +20,7 @@ namespace WBSBE.Common.Model
         public string? statusLaporan { get; set; }
 
         public List<AttachmentResultModel>? listDocument { get; set; }
-
-        //public List<IFormFile> listDocument { get; set; }
+        public List<HistoryNoteModel>? listHistory { get; set; }
         public string? message { get; set; }
     }
 }

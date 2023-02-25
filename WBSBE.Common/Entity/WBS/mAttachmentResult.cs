@@ -39,7 +39,6 @@ namespace WBSBE.Common.Entity.WBS
         [StringLength(50)]
         public string? txtUpdatedBy { get; set; }
         public DateTime? dtmUpdated { get; set; }
-
-        public virtual mResultInvestigation mResultInvestigation { get; set; }
+        public string txtNomorID { get; set; }
     }
 }

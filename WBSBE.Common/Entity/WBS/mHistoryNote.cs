@@ -8,29 +8,23 @@ using System.Threading.Tasks;
 
 namespace WBSBE.Common.Entity.WBS
 {
-    public class mConfig
+    public class mHistoryNote
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int intConfig { get; set; }
+        public int intHistoryNote { get; set; }
+
+        [StringLength(255)]
+        public string? txtNote { get; set; }
 
         [StringLength(50)]
-        public string txtName { get; set; }
+        public string txtNomorAduan { get; set; }
 
-        [StringLength(50)]
-        public string txtType { get; set; }
-
-        [StringLength(int.MaxValue)]
-        public string txtValue { get; set; }
-
-        public bool bitActive { get; set; }
+        [StringLength(255)]
+        public string Action { get; set; }
 
         [StringLength(50)]
         public string? txtInsertedBy { get; set; }
         public DateTime? dtmInserted { get; set; }
-
-        [StringLength(50)]
-        public string? txtUpdatedBy { get; set; }
-        public DateTime? dtmUpdated { get; set; }
     }
 }
