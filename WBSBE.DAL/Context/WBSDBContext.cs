@@ -35,6 +35,7 @@ namespace WBSBE.DAL.Context
         public virtual DbSet<mSetInvestigation> mSetInvestigation { get; set; }
         public virtual DbSet<mResultInvestigation> mResultInvestigation { get; set; }
         public virtual DbSet<mAttachmentResult> mAttachmentResult { get; set; }
+        public virtual DbSet<mHistoryNote> mHistoryNote { get; set; }
 
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -70,7 +72,7 @@ namespace WBSBE.BussLogic
                     result.statusLaporan = "Saved";
                 }
 
-                var existsAttachment = context.mAttachmentResult.Where(a => a.mResultInvestigation.intResultInvestigationID == existsNomor.intResultInvestigationID).ToList();
+                var existsAttachment = context.mAttachmentResult.Where(a => a.txtNomorID == existsNomor.txtNomorID).ToList();
 
                 if (existsAttachment.Count > 0)
                 {
@@ -103,7 +105,45 @@ namespace WBSBE.BussLogic
 
         public ResultInvestigationModel GetDataById(string paramTxtId)
         {
-            throw new NotImplementedException();
+            try
+            {
+                using (var context = new WBSDBContext())
+                {
+                    ResultInvestigationModel result = new ResultInvestigationModel();
+                    result.listHistory = new();
+
+                    var existsNomor = context.mResultInvestigation.Where(n => n.txtNomorID == paramTxtId && n.bitActive == true).FirstOrDefault();
+
+                    if (existsNomor != null)
+                    {
+                        result.txtNomorID = existsNomor.txtNomorID;
+                        
+                        var existNote = context.mHistoryNote.Where(n => n.txtNomorAduan == paramTxtId).OrderByDescending(x => x.dtmInserted).ToList();
+
+                        if (existNote.Count > 0)
+                        {
+                            foreach (var item in existNote)
+                            {
+                                HistoryNoteModel notes = new();
+                                notes.action = item.Action;
+
+                                result.listHistory.Add(notes);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        result.message = "Data Hasil Investigasi tidak ditemukan";
+                    }
+
+                    return result;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex.Message);
+                throw;
+            }            
         }
 
         public string Insert(ResultInvestigationModel paramData)
@@ -124,99 +164,75 @@ namespace WBSBE.BussLogic
 
         public string Insert(ResultInvestigationModel paramData, WBSDBContext context)
         {
-            try
+            using (var transaction = context.Database.BeginTransaction())
             {
-                mResultInvestigation result = new mResultInvestigation();
-                result.txtNomorID = paramData.txtNomorID;
-                result.txtExecutive = paramData.ExecutiveSummary;
-                result.txtNote = paramData.Notes;
-                result.bitSubmit = false;
-                result.bitSentMail = false;
-                result.dtInserted = DateTime.UtcNow;
-                result.txtInsertedBy = "Manual";
-                result.bitActive = true;
-
-                foreach (var file in paramData.listDocument)
+                try
                 {
-                    mAttachmentResult attachment = new ();
-                    string message = AttachmentValidation(file.listAttachment, context, attachment);
+                    mResultInvestigation result = new mResultInvestigation();
+                    result.txtNomorID = paramData.txtNomorID;
+                    result.txtExecutive = paramData.ExecutiveSummary;
+                    result.txtNote = paramData.Notes;
+                    result.bitSubmit = false;
+                    result.bitSentMail = false;
+                    result.dtInserted = DateTime.UtcNow;
+                    result.txtInsertedBy = "Manual"; //will be change to user login
+                    result.bitActive = true;
 
-                    if (String.IsNullOrEmpty(message))
-                    {
-                        InsertAttachment(attachment, file.listAttachment);
-                        attachment.txtFileDescription = file.FileDescription;
-                        attachment.bitActive = true;
-                        attachment.txtFileName = file.listAttachment.FileName;
-                        attachment.dtmInserted = DateTime.UtcNow;
-                        attachment.txtInsertedBy = "Manual"; //will be change to user login                                    
+                    mHistoryNote history1 = new mHistoryNote();
+                    history1.Action = "Melakukan penyimpanan hasil laporan";
+                    history1.txtNomorAduan = paramData.txtNomorID;
+                    history1.txtNote = paramData.Notes;
+                    history1.dtmInserted = result.dtInserted;
+                    history1.txtInsertedBy = result.txtInsertedBy;
 
-                        result.listAttachments.Add(attachment);
-                    }
-                    else
+                    context.mHistoryNote.Add(history1);
+
+                    foreach (var file in paramData.listDocument)
                     {
-                        return ResponseHandler.SendResponse(message);
+                        mAttachmentResult attachment = new();
+                        string message = AttachmentValidation(file.listAttachment, context, attachment);
+
+                        if (String.IsNullOrEmpty(message))
+                        {
+                            InsertAttachment(attachment, file.listAttachment);
+                            attachment.txtNomorID = paramData.txtNomorID;
+                            attachment.txtFileDescription = file.FileDescription;
+                            attachment.bitActive = true;
+                            attachment.txtFileName = file.listAttachment.FileName;
+                            attachment.dtmInserted = DateTime.UtcNow;
+                            attachment.txtInsertedBy = "Manual"; //will be change to user login
+
+                            context.mAttachmentResult.Add(attachment);
+
+                            mHistoryNote history2 = new();
+                            history2.txtNomorAduan = paramData.txtNomorID;
+                            history2.Action = "Menambahkan lampiran " + file.listAttachment.FileName;
+                            history2.dtmInserted = attachment.dtmInserted;
+                            history2.txtInsertedBy = attachment.txtInsertedBy;
+                            history2.txtNote = paramData.Notes;
+
+                            context.mHistoryNote.Add(history2);
+                        }
+                        else
+                        {
+                            return ResponseHandler.SendResponse(message);
+                        }
                     }
+
+                    context.mResultInvestigation.Add(result);
+                    context.SaveChanges();
+                    transaction.Commit();
+
+                    #region sendingEmail  
+                    //SendEmail(context, paramData.txtNomorID, listEmail, listUserName, listRoleName);
+                    #endregion
+
+                    return ResponseHandler.SendResponse("Data berhasil di simpan");
                 }
-
-                context.mResultInvestigation.Add(result);
-                context.SaveChanges();
-
-                #region sendingEmail  
-                //string subjectMailComplainer = context.mConfig.Where(c => c.txtType == "ComplaintReceived" && c.txtName == "MailSubject" && c.bitActive == true)
-                //                                .Select(c => c.txtValue).FirstOrDefault();
-                //string fromMailComplainer = context.mConfig.Where(c => c.txtType == "ComplaintReceived" && c.txtName == "MailFrom" && c.bitActive == true)
-                //                                .Select(c => c.txtValue).FirstOrDefault();
-                //string bodyMailComplainer = context.mConfig.Where(c => c.txtType == "ComplaintReceived" && c.txtName == "MailBody" && c.bitActive == true)
-                //                                .Select(c => c.txtValue).FirstOrDefault();
-
-                //bodyMailComplainer = bodyMailComplainer.Replace("##FULLNAME##", paramData.txtNama).Replace("##NOMORADUAN##", aduan.txtNomorID);
-
-                //cstmMailModel mailModelComplainer = new cstmMailModel();
-                //mailModelComplainer.txtSubject = subjectMailComplainer;
-                //mailModelComplainer.txtBody = bodyMailComplainer;
-                //mailModelComplainer.txtFrom = fromMailComplainer;
-                //mailModelComplainer.txtTo = paramData.txtEmail;
-
-                //string subjectMailCommmittee = context.mConfig.Where(c => c.txtType == "ComplaintIn" && c.txtName == "MailSubject" && c.bitActive == true)
-                //                                .Select(c => c.txtValue).FirstOrDefault();
-                //string fromMailCommmittee = context.mConfig.Where(c => c.txtType == "ComplaintIn" && c.txtName == "MailFrom" && c.bitActive == true)
-                //                                .Select(c => c.txtValue).FirstOrDefault();
-                //string bodyMailCommittee = context.mConfig.Where(c => c.txtType == "ComplaintIn" && c.txtName == "MailBody" && c.bitActive == true)
-                //                                .Select(c => c.txtValue).FirstOrDefault();
-                //string toMailCommittee = context.mConfig.Where(c => c.txtType == "ComplaintIn" && c.txtName == "MailTo" && c.bitActive == true)
-                //                                .Select(c => c.txtValue).FirstOrDefault();
-
-                //bodyMailCommittee = bodyMailCommittee.Replace("##FULLNAME##", toMailCommittee).Replace("##NOMORADUAN##", aduan.txtNomorID);
-
-                //cstmMailModel mailModelCommitee = new cstmMailModel();
-                //mailModelCommitee.txtSubject = subjectMailCommmittee;
-                //mailModelCommitee.txtBody = bodyMailCommittee;
-                //mailModelCommitee.txtFrom = fromMailCommmittee;
-                //mailModelCommitee.txtTo = paramData.txtEmail;
-                //mailModelCommitee.listAttachment = paramData.fileData;
-
-                //try
-                //{
-                //    clsCommonFunction.SendEmailViaKNGlobal(mailModelComplainer);
-                //    clsCommonFunction.SendEmailViaKNGlobal(mailModelCommitee);
-
-                //    aduan.bitSentMail = true;
-                //    context.SaveChanges();
-                //}
-                //catch (Exception ex)
-                //{
-                //    return ResponseHandler.SendResponse(ex.Message);
-                //}
-
-                //aduan.bitSentMail = true;
-                //context.SaveChanges();
-                #endregion
-
-                return ResponseHandler.SendResponse("Data berhasil di simpan");
-            }
-            catch (Exception ex)
-            {
-                return ResponseHandler.SendResponse(ex.Message);
+                catch (Exception ex)
+                {
+                    return ResponseHandler.SendResponse(ex.Message);
+                }
             }
         }
 
@@ -292,9 +308,93 @@ namespace WBSBE.BussLogic
 
                     if (existingResultInvestigations != null)
                     {
+                        existingResultInvestigations.txtExecutive = paramData.ExecutiveSummary;
+                        existingResultInvestigations.txtNote = paramData.Notes;
+                        existingResultInvestigations.bitActive = true;
                         existingResultInvestigations.bitSubmit = true;
                         existingResultInvestigations.dtUpdated = DateTime.UtcNow;
-                        existingResultInvestigations.txtUpdatedBy = "Manual";
+                        existingResultInvestigations.txtUpdatedBy = "Manual"; //will be change to user login
+
+                        mHistoryNote notes = new mHistoryNote();
+                        notes.Action = "Melakukan submit hasil laporan";
+                        notes.txtNomorAduan = paramData.txtNomorID;
+                        notes.txtNote = paramData.Notes;
+                        notes.dtmInserted = DateTime.UtcNow;
+                        notes.txtInsertedBy = "Manual"; //will be change to user login
+
+                        context.mHistoryNote.Add(notes);
+
+                        if (paramData.listDocument != null)
+                        {
+                            foreach (var file in paramData.listDocument)
+                            {
+                                var existAttachment = context.mAttachmentResult.Where(a => a.txtFileName == file.listAttachment.FileName && a.bitActive == true &&
+                                                    a.txtNomorID == existingResultInvestigations.txtNomorID).FirstOrDefault();
+
+                                if (existAttachment != null)
+                                {
+                                    string message = AttachmentValidation(file.listAttachment, context, existAttachment);
+
+                                    if (String.IsNullOrEmpty(message))
+                                    {
+                                        FileInfo fi = new FileInfo(file.listAttachment.FileName);
+                                        var fileExt = fi.Extension;
+                                        existAttachment.txtEncryptedName = clsCommonFunction.saveAttachment(file.listAttachment, ClsGlobalConstant.PathAttachmentConstant.pathAttachmentTest, existAttachment.txtEncryptedName);
+                                        var pathAttachment = ClsGlobalConstant.PathAttachmentConstant.pathAttachmentTest;
+                                        pathAttachment = pathAttachment.Replace("~/", "").Replace("/", Path.DirectorySeparatorChar.ToString());
+                                        existAttachment.txtFilePath = ClsGlobalClass.GetRootPath + pathAttachment + existAttachment.txtFileName;
+                                        existAttachment.dtmUpdated = DateTime.UtcNow;
+                                        existAttachment.txtUpdatedBy = "Manual"; //will be change to user login
+
+                                        context.mAttachmentResult.Update(existAttachment);
+
+                                        mHistoryNote history = new();
+                                        history.txtNomorAduan = paramData.txtNomorID;
+                                        history.Action = "Mengubah lampiran " + file.listAttachment.FileName;
+                                        history.dtmInserted = existAttachment.dtmUpdated;
+                                        history.txtInsertedBy = existAttachment.txtUpdatedBy;
+                                        history.txtNote = paramData.Notes;
+
+                                        context.mHistoryNote.Add(history);
+                                    }
+                                    else
+                                    {
+                                        return ResponseHandler.SendResponse(message);
+                                    }
+                                }
+                                else 
+                                {
+                                    mAttachmentResult attachment = new();
+                                    string message = AttachmentValidation(file.listAttachment, context, attachment);
+
+                                    if (String.IsNullOrEmpty(message))
+                                    {
+                                        InsertAttachment(attachment, file.listAttachment);
+                                        attachment.txtNomorID = paramData.txtNomorID;
+                                        attachment.txtFileDescription = file.FileDescription;
+                                        attachment.bitActive = true;
+                                        attachment.txtFileName = file.listAttachment.FileName;
+                                        attachment.dtmInserted = DateTime.UtcNow;
+                                        attachment.txtInsertedBy = "Manual"; //will be change to user login
+
+                                        context.mAttachmentResult.Add(attachment);
+
+                                        mHistoryNote history = new();
+                                        history.txtNomorAduan = paramData.txtNomorID;
+                                        history.Action = "Menambahkan lampiran " + file.listAttachment.FileName;
+                                        history.dtmInserted = attachment.dtmInserted;
+                                        history.txtInsertedBy = attachment.txtInsertedBy;
+                                        history.txtNote = paramData.Notes;
+
+                                        context.mHistoryNote.Add(history);
+                                    }
+                                    else
+                                    {
+                                        return ResponseHandler.SendResponse(message);
+                                    }
+                                }
+                            }
+                        }                        
 
                         #region sendingEmail
                         //SendEmail(context, paramData.txtNomorID, listEmail, listUserName, listRoleName);
@@ -313,8 +413,17 @@ namespace WBSBE.BussLogic
                         result.bitSubmit = false;
                         result.bitSentMail = false;
                         result.dtInserted = DateTime.UtcNow;
-                        result.txtInsertedBy = "Manual";
+                        result.txtInsertedBy = "Manual"; //will be change to user login
                         result.bitActive = true;
+
+                        mHistoryNote notes = new mHistoryNote();
+                        notes.Action = "Melakukan submit hasil laporan";
+                        notes.txtNomorAduan = paramData.txtNomorID;
+                        notes.txtNote = paramData.Notes;
+                        notes.dtmInserted = DateTime.UtcNow;
+                        notes.txtInsertedBy = "Manual"; //will be change to user login
+
+                        context.mHistoryNote.Add(notes);
 
                         foreach (var file in paramData.listDocument)
                         {
@@ -324,13 +433,23 @@ namespace WBSBE.BussLogic
                             if (String.IsNullOrEmpty(message))
                             {
                                 InsertAttachment(attachment, file.listAttachment);
+                                attachment.txtNomorID = paramData.txtNomorID;
                                 attachment.txtFileDescription = file.FileDescription;
                                 attachment.bitActive = true;
                                 attachment.txtFileName = file.listAttachment.FileName;
                                 attachment.dtmInserted = DateTime.UtcNow;
                                 attachment.txtInsertedBy = "Manual"; //will be change to user login
 
-                                result.listAttachments.Add(attachment);
+                                context.mAttachmentResult.Add(attachment);
+
+                                mHistoryNote history = new();
+                                history.txtNomorAduan = paramData.txtNomorID;
+                                history.Action = "Menambahkan lampiran " + file.listAttachment.FileName;
+                                history.dtmInserted = attachment.dtmInserted;
+                                history.txtInsertedBy = attachment.txtInsertedBy;
+                                history.txtNote = paramData.Notes;
+
+                                context.mHistoryNote.Add(history);
                             }
                             else
                             {
@@ -369,6 +488,115 @@ namespace WBSBE.BussLogic
             }
         }
 
+        #region AddAttachment
+        public string AddAttachment(ResultInvestigationModel paramData)
+        {
+            using (var context = new WBSDBContext())
+            {
+                using (var transaction = context.Database.BeginTransaction())
+                {
+                    try
+                    {                    
+                        var resultInvestigation = context.mResultInvestigation.Where(a => a.txtNomorID == paramData.txtNomorID && a.bitActive == true && a.bitSentMail == false).FirstOrDefault();
+                        if (resultInvestigation != null)
+                        {
+                            foreach (var file in paramData.listDocument)
+                            {
+                                mAttachmentResult attachment = new mAttachmentResult();
+                                string message = AttachmentValidation(file.listAttachment, context, attachment);
+
+                                if (String.IsNullOrEmpty(message))
+                                {
+                                    InsertAttachment(attachment, file.listAttachment);
+                                    
+                                    attachment.txtNomorID = paramData.txtNomorID;
+                                    attachment.txtFileDescription = file.FileDescription;
+                                    attachment.bitActive = true;
+                                    attachment.txtFileName = file.listAttachment.FileName;
+                                    attachment.dtmInserted = DateTime.UtcNow;
+                                    attachment.txtInsertedBy = "Manual"; //will be change to user login
+
+                                    context.mAttachmentResult.Add(attachment);
+
+                                    mHistoryNote history = new();
+                                    history.txtNomorAduan = paramData.txtNomorID;
+                                    history.Action = "Menambahkan lampiran " + file.listAttachment.FileName;
+                                    history.txtNote = paramData.Notes;
+                                    history.dtmInserted = attachment.dtmInserted;
+                                    history.txtInsertedBy = attachment.txtInsertedBy;
+                                    history.txtNote = paramData.Notes;
+
+                                    context.mHistoryNote.Add(history);                                    
+                                }
+                                else
+                                {
+                                    return ResponseHandler.SendResponse(message);
+                                }
+                            }
+
+                            context.SaveChanges();
+                            transaction.Commit();
+                        }
+                        else
+                        {
+                            return ResponseHandler.SendResponse("Mohon diperiksa kembali data yang Anda lampirkan.");
+                        }
+
+                        return ResponseHandler.SendResponse("Lampiran berhasil di submit");
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex.Message);
+                        throw;
+                    }
+                }
+            }
+        }
+        #endregion
+
+        #region DeleteAttachment
+        public string DeleteAttachment(int id)
+        {
+            using (var context = new WBSDBContext())
+            {
+                using (var transaction = context.Database.BeginTransaction())
+                {
+                    try
+                    {
+                        var fullPath = Path.GetFullPath(ClsGlobalClass.GetRootPath + ClsGlobalConstant.PathAttachmentConstant.pathAttachmentTest);
+                        var extAttachment = context.mAttachmentResult.Where(x => x.intAttachmentID == id && x.bitActive == true).FirstOrDefault();
+                        var extResult = context.mResultInvestigation.Where(x => x.txtNomorID == extAttachment.txtNomorID && x.bitActive == true).FirstOrDefault();
+                        clsCommonFunction.checkAndDeleteAttacment(fullPath, extAttachment.txtEncryptedName);
+
+                        extAttachment.bitActive = false;
+                        extAttachment.dtmUpdated = DateTime.UtcNow;
+                        extAttachment.txtInsertedBy = "Manual"; //will be change to user login
+
+                        context.mAttachmentResult.Update(extAttachment);
+
+                        mHistoryNote history = new();
+                        history.txtNomorAduan = extResult.txtNomorID;
+                        history.Action = "Menghapus lampiran " + extAttachment.txtFileName;
+                        history.dtmInserted = extAttachment.dtmInserted;
+                        history.txtInsertedBy = extAttachment.txtInsertedBy;
+
+                        context.mHistoryNote.Add(history);
+                        context.SaveChanges();
+                        transaction.Commit();
+
+                        return ResponseHandler.SendResponse("Lampiran berhasil di hapus");
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex.Message);
+                        throw;
+                    }
+                }                
+            }            
+        }
+        #endregion
+
+        #region AttachmentValidation
         public string AttachmentValidation(IFormFile file, WBSDBContext context, mAttachmentResult attachment)
         {
             string message = "";
@@ -384,7 +612,9 @@ namespace WBSBE.BussLogic
 
             return message;
         }
+        #endregion
 
+        #region AllowedExtensionAttachment
         public bool AllowedExtensionAttachment(WBSDBContext context, IFormFile file, mAttachmentResult attachment)
         {
             FileInfo fi = new FileInfo(file.FileName);
@@ -403,7 +633,9 @@ namespace WBSBE.BussLogic
 
             return true;
         }
+        #endregion
 
+        #region MaxSizeAttachment
         public bool MaxSizeAttachment(WBSDBContext context, IFormFile file, mAttachmentResult attachment)
         {
             int alloweedMaxSizeInKB = int.Parse(context.mConfig.Where(c => c.txtType == "BuktiPendukung" && c.txtName == "AllowedBuktiPendukungMaxSize" && c.bitActive == true)
@@ -425,7 +657,9 @@ namespace WBSBE.BussLogic
 
             return true;
         }
+        #endregion
 
+        #region InsertAttachment
         public void InsertAttachment(mAttachmentResult attachment, IFormFile file)
         {
             FileInfo fi = new FileInfo(file.FileName);
@@ -436,7 +670,9 @@ namespace WBSBE.BussLogic
             pathAttachment = pathAttachment.Replace("~/", "").Replace("/", Path.DirectorySeparatorChar.ToString());
             attachment.txtFilePath = ClsGlobalClass.GetRootPath + pathAttachment + fileName;
         }
+        #endregion
 
+        #region SendEmail
         public string SendEmail(WBSDBContext context, string nomor, List<string> listEmail, List<string> listUserName, List<string> listRoleName)
         {
             string rn = "";
@@ -480,13 +716,6 @@ namespace WBSBE.BussLogic
             try
             {
                 clsCommonFunction.SendEmailViaKNGlobal(mailModel);
-
-                //foreach (var item in listIdInvestigation)
-                //{
-                //    item.bitSentMail = true;
-                //    context.Update(item);
-                //    context.SaveChanges();
-                //}
             }
             catch (Exception ex)
             {
@@ -495,5 +724,20 @@ namespace WBSBE.BussLogic
 
             return ResponseHandler.SendResponse("Data berhasil di submit");
         }
+        #endregion
+
+        #region GetFormatNote
+        public string GetFormatNote(string type, string extNote)
+        {
+            string notes = "";
+            if (type == "Revise")
+            {
+                var dateNow = DateTime.Now.ToString("dd MMM yyyy hh:mm:ss");
+                notes = dateNow + "-" + type + "-" + extNote;
+            }
+
+            return notes;
+        }
+        #endregion
     }
 }

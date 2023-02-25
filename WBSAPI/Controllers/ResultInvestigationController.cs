@@ -21,6 +21,7 @@ namespace WBSBE.Controllers
             clsInvestigation = new clsMResultInvestigation();
         }
         #endregion
+
         #region SaveResultInvestigation
         [HttpPost]
         [Route("SaveResultInvestigation")]
@@ -115,6 +116,81 @@ namespace WBSBE.Controllers
                 var file = context.mAttachmentResult.Where(a => a.intAttachmentID == id && a.bitActive == true).FirstOrDefault();
                 byte[] bytes = System.IO.File.ReadAllBytes(file.txtFilePath);
                 return File(bytes, "application/octet-stream", file.txtFileName);
+            }
+        }
+        #endregion
+
+        #region AddAttachment
+        [HttpPost]
+        [Route("AddAttachment")]
+        public IActionResult addLampiran([FromForm] ResultInvestigationModel investigation)
+        {
+            if (investigation.listDocument == null)
+            {
+                ResponseType type = ResponseType.Failure;
+                string message = "Lampiran tidak boleh kosong";
+                return BadRequest(ResponseHandler.GetAppResponse(type, null, message));
+            }
+            else
+            {
+                try
+                {
+                    ResponseType type = ResponseType.Success;
+                    string message = clsInvestigation.AddAttachment(investigation);
+                    return Ok(ResponseHandler.GetAppResponse(type, investigation, message));
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest(ResponseHandler.GetExceptionResponse(ex));
+                }
+            }
+        }
+        #endregion
+
+        #region DeleteAttachment
+        [HttpPost]
+        [Route("DeleteAttachment")]
+        public IActionResult deleteLampiran(int idAttachment)
+        {
+            try
+            {
+                ResponseType type = ResponseType.Success;
+                string message = clsInvestigation.DeleteAttachment(idAttachment);
+                return Ok(ResponseHandler.GetAppResponse(type, null, message));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ResponseHandler.GetExceptionResponse(ex));
+            }
+        }
+        #endregion
+
+        #region GetNoteHistory
+        [HttpPost]
+        [Route("GetNoteHistory")]
+        public IActionResult getNoteHistory(clsGlobalAPI apiDat)
+        {
+            try
+            {
+                JObject param = JObject.Parse(apiDat.objRequestData.ToString());
+                var dtParam = JsonConvert.DeserializeObject<mResultInvestigation>(param.ToString());
+
+                WBSDBContext context = new WBSDBContext();
+                var objData = clsInvestigation.GetDataById(dtParam.txtNomorID);
+
+                if (objData.message != null)
+                {
+                    ResponseType type = ResponseType.NotFound;
+                    apiDat.txtMessage = objData.message;
+                    return Ok(apiDat);
+                }
+
+                apiDat = clsGlobalAPI.CreateResult(apiDat, true, objData, string.Empty, string.Empty);
+                return Ok(apiDat);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ResponseHandler.GetExceptionResponse(ex));
             }
         }
         #endregion

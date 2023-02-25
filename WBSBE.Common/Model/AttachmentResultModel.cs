@@ -11,8 +11,8 @@ namespace WBSBE.Common.Model
     {
         public string? FileName { get; set; }
         public string? FileDescription { get; set; }
-        public string dtmInserted { get; set; }
+        public string? dtmInserted { get; set; }
         public string? txtInsertedBy { get; set; }
-        public IFormFile listAttachment { get; set; }
+        public IFormFile? listAttachment { get; set; }
     }
 }

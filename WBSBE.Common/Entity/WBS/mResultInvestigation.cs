@@ -10,11 +10,6 @@ namespace WBSBE.Common.Entity.WBS
 {
     public class mResultInvestigation
     {
-        public mResultInvestigation()
-        {
-            listAttachments = new List<mAttachmentResult>();
-        }
-
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int intResultInvestigationID { get; set; }
@@ -38,7 +33,5 @@ namespace WBSBE.Common.Entity.WBS
         public string txtNomorID { get; set; }
         public bool bitSubmit { get; set; }
         public bool bitSentMail { get; set; }
-
-        public List<mAttachmentResult> listAttachments { get; set; }
     }
 }
